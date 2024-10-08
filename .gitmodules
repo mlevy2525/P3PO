@@ -6,3 +6,12 @@
 	path = Open-Teach
 	url = https://github.com/siddhanthaldar/Open-Teach.git
 	branch = baku
+[submodule "dift"]
+	path = dift
+	url = https://github.com/mlevy2525/dift.git
+[submodule "Depth-Anything-V2"]
+	path = Depth-Anything-V2
+	url = https://github.com/mlevy2525/Depth-Anything-V2.git
+[submodule "co-tracker"]
+	path = co-tracker
+	url = https://github.com/mlevy2525/co-tracker.git
