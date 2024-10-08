@@ -1,4 +1,4 @@
-name: baku
+name: p3po
 channels:
   - defaults
 dependencies:

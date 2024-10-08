@@ -171,3 +171,6 @@ cython_debug/
 */*/weights/
 expert_demos/
 */exp_local/
+
+coordinates/coords/*
+coordinates/images/*
