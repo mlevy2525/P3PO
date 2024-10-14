@@ -17,12 +17,15 @@ pickle_image_key = ""
 #Otherwise we need to add videos to a list
 #TODO: A list of videos to read from if you are not loading data from a pickle
 video_paths = []
+for i in range(1, 61):
+    video_paths.append("/fs/cfar-projects/waypoint_rl/BAKU/robot_demos/processed_data/0908_putmugonplate/demonstration_%d/videos/camera1.mp4" % i)
+
 
 #TODO: Set to true if you want to save a video of the points being tracked
 write_videos = True
 
-# If you want to subsample the frames, set the subsample rate here
-subsample = 3
+#TODO:  If you want to subsample the frames, set the subsample rate here
+subsample = 1
 
 with open("../cfgs/config.yaml") as stream:
     try:
@@ -58,10 +61,11 @@ for i in range(num_demos):
             subsample_counter += 1
         video.release()
 
+    mark_every = 1
     points_class.add_to_image_list(frames[0])
     points_class.find_semantic_similar_points()
     points_class.track_points(is_first_step=True)
-    points_class.track_points(one_frame=False)
+    points_class.track_points(one_frame=(mark_every == 1))
     points_class.get_depth()
 
     points_list = []
@@ -73,26 +77,26 @@ for i in range(num_demos):
         image = points_class.plot_image()
         video_list.append(image[0])
 
-    mark_every = 1
     for idx,image in enumerate(frames[1:]):
+        print(idx)
         points_class.add_to_image_list(image)
         if (idx + 1) % mark_every == 0 or idx == (len(frames) - 1):
-            to_add = mark_every - (idx + 1) % 8
+            to_add = mark_every - (idx + 1) % mark_every
             if to_add < mark_every:
                 for j in range(to_add):
                     points_class.add_to_image_list(image)
             else:
                 to_add = 0
 
-            points_class.track_points(one_frame=False)
-            points_class.get_depth(last_n_frames=8)
+            points_class.track_points(one_frame=(mark_every == 1))
+            points_class.get_depth(last_n_frames=mark_every)
 
-            points = points_class.get_points(last_n_frames=8)
+            points = points_class.get_points(last_n_frames=mark_every)
             for j in range(mark_every - to_add):
                 points_list.append(points[j])
 
             if write_videos:
-                images = points_class.plot_image(last_n_frames=8)
+                images = points_class.plot_image(last_n_frames=mark_every)
                 for j in range(mark_every - to_add):
                     video_list.append(images[j])
 

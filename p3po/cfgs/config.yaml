@@ -1,9 +1,9 @@
 defaults:
   - _self_
 
-root_dir: /your/path/to/P3PO
+root_dir: /fs/cfar-projects/waypoint_rl/BAKU_final/P3PO
 
-task_name: ""
+task_name: "mugonplate"
 device: "cuda"
 
 width: -1
@@ -14,4 +14,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: -1
+num_points: 11
