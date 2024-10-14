@@ -18,6 +18,7 @@ batch_size: 64
 
 # experiment
 obs_type: "pixels" # pixels, features
+training_keys: ${suite.pixel_keys}
 num_demos_per_task: 50
 encoder_type: 'resnet' # base, resnet
 policy_type: 'gpt' # mlp, gpt

@@ -170,9 +170,8 @@ class BCAgent:
         encoder_type,
         policy_type,
         policy_head,
-        pixel_keys,
+        training_keys,
         proprio_key,
-        feature_key,
         use_proprio,
         train_encoder,
         norm,
@@ -197,7 +196,7 @@ class BCAgent:
         self.obs_type = obs_type
         self.encoder_type = encoder_type
         self.policy_head = policy_head
-        self.use_proprio = use_proprio if obs_type == "pixels" else False
+        self.use_proprio = use_proprio
         self.norm = norm
         self.train_encoder = train_encoder
         self.history_len = history_len if history else 1
@@ -217,11 +216,8 @@ class BCAgent:
         self._act_dim = action_shape[0]
 
         # keys
-        if obs_type == "pixels":
-            self.pixel_keys = pixel_keys
-            self.proprio_key = proprio_key
-        else:
-            self.feature_key = feature_key
+        self.keys = training_keys
+        self.proprio_key = proprio_key
 
         # action chunking params
         self.temporal_agg = temporal_agg
@@ -229,20 +225,14 @@ class BCAgent:
         self.num_queries = num_queries if self.temporal_agg else 1
 
         # number of inputs per time step
-        if obs_type == "features":
-            num_feat_per_step = 1
-        elif obs_type == "pixels":
-            num_feat_per_step = len(self.pixel_keys)
-            if use_proprio:
-                num_feat_per_step += 1
+        num_feat_per_step = len(self.keys)
+        if use_proprio:
+            num_feat_per_step += 1
 
         # observation params
-        if obs_type == "pixels":
-            if use_proprio:
-                proprio_shape = obs_shape[self.proprio_key]
-            obs_shape = obs_shape[self.pixel_keys[0]]
-        else:
-            obs_shape = obs_shape[self.feature_key]
+        if use_proprio:
+            proprio_shape = obs_shape[self.proprio_key]
+        obs_shape = obs_shape[self.keys[0]]
 
         # Track model size
         model_size = 0
@@ -253,7 +243,7 @@ class BCAgent:
                 self.encoder = {}
             if self.encoder_type == "base":
                 if self.separate_encoders:
-                    for key in self.pixel_keys:
+                    for key in self.keys:
                         self.encoder[key] = BaseEncoder(obs_shape).to(device)
                         self.repr_dim = self.encoder[key].repr_dim
                         model_size += sum(
@@ -269,7 +259,7 @@ class BCAgent:
                     )
             elif self.encoder_type == "resnet":
                 if self.separate_encoders:
-                    for key in self.pixel_keys:
+                    for key in self.keys:
                         self.encoder[key] = ResnetEncoder(
                             obs_shape,
                             512,
@@ -295,11 +285,20 @@ class BCAgent:
             elif self.encoder_type == "patch":
                 pass
         else:
-            self.encoder = MLP(obs_shape[0], hidden_channels=[512, 512]).to(device)
-            model_size += sum(
-                p.numel() for p in self.encoder.parameters() if p.requires_grad
-            )
-            self.repr_dim = 512
+            if self.separate_encoders:
+                for key in self.keys:
+                    self.encoder[key] = MLP(obs_shape[0], hidden_channels=[512, 512]).to(device)
+                    model_size += sum(
+                        p.numel()
+                        for p in self.encoder[key].parameters()
+                        if p.requires_grad
+                    )
+            else:
+                self.encoder = MLP(obs_shape[0], hidden_channels=[512, 512]).to(device)
+                model_size += sum(
+                    p.numel() for p in self.encoder.parameters() if p.requires_grad
+                )
+                self.repr_dim = 512
 
         # language encoder
         if self.use_language:
@@ -331,7 +330,7 @@ class BCAgent:
             )
 
         if policy_type == "mlp":
-            repr_mult_factor = len(self.pixel_keys) if obs_type == "pixels" else 1
+            repr_mult_factor = len(self.keys)
             if use_proprio:
                 repr_mult_factor += 1
             if history:
@@ -369,7 +368,7 @@ class BCAgent:
         if self.train_encoder:
             if self.separate_encoders:
                 params = []
-                for key in self.pixel_keys:
+                for key in self.keys:
                     params += list(self.encoder[key].parameters())
             else:
                 params = list(self.encoder.parameters())
@@ -413,7 +412,7 @@ class BCAgent:
         self.training = training
         if training:
             if self.separate_encoders:
-                for key in self.pixel_keys:
+                for key in self.keys:
                     if self.train_encoder:
                         self.encoder[key].train(training)
                     else:
@@ -425,30 +424,27 @@ class BCAgent:
                     self.encoder.eval()
             if self.use_language:
                 self.language_projector.train(training)
-            if self.obs_type == "pixels" and self.use_proprio:
+            if self.use_proprio:
                 self.proprio_projector.train(training)
             self.actor.train(training)
         else:
             if self.separate_encoders:
-                for key in self.pixel_keys:
+                for key in self.keys:
                     self.encoder[key].eval()
             else:
                 self.encoder.eval()
             if self.use_language:
                 self.language_projector.eval()
-            if self.obs_type == "pixels" and self.use_proprio:
+            if self.use_proprio:
                 self.proprio_projector.eval()
             self.actor.eval()
 
     def buffer_reset(self):
-        if self.obs_type == "pixels":
-            self.observation_buffer = {}
-            for key in self.pixel_keys:
-                self.observation_buffer[key] = deque(maxlen=self.eval_history_len)
-            if self.use_proprio:
-                self.proprio_buffer = deque(maxlen=self.eval_history_len)
-        else:
-            self.observation_buffer = deque(maxlen=self.eval_history_len)
+        self.observation_buffer = {}
+        for key in self.keys:
+            self.observation_buffer[key] = deque(maxlen=self.eval_history_len)
+        if self.use_proprio:
+            self.proprio_buffer = deque(maxlen=self.eval_history_len)
 
         # temporal aggregation
         if self.temporal_agg:
@@ -462,7 +458,7 @@ class BCAgent:
 
     def clear_buffers(self):
         del self.observation_buffer
-        if self.obs_type == "pixels" and self.use_proprio:
+        if self.use_proprio:
             del self.proprio_buffer
         if self.temporal_agg:
             del self.all_time_actions
@@ -499,7 +495,7 @@ class BCAgent:
         if self.train_encoder:
             if self.separate_encoders:
                 params = []
-                for key in self.pixel_keys:
+                for key in self.keys:
                     params += list(self.encoder[key].parameters())
             else:
                 params = list(self.encoder.parameters())
@@ -534,11 +530,9 @@ class BCAgent:
 
         # lang projection
         if self.use_language:
-            key = self.pixel_keys[0] if self.obs_type == "pixels" else self.feature_key
+            key = self.keys[0]
             repeat_len = (
                 min(len(self.observation_buffer[key]) + 1, self.eval_history_len)
-                if self.obs_type == "pixels"
-                else min(len(self.observation_buffer) + 1, self.eval_history_len)
             )
             lang_features = (
                 torch.as_tensor(prompt["task_emb"], device=self.device)
@@ -548,40 +542,39 @@ class BCAgent:
         else:
             lang_features = None
 
-        if self.obs_type == "pixels":
-            # add to buffer
-            features = []
-            for key in self.pixel_keys:
-                self.observation_buffer[key].append(
-                    self.test_aug(obs[key].transpose(1, 2, 0)).numpy()
-                )
-                pixels = torch.as_tensor(
-                    np.array(self.observation_buffer[key]), device=self.device
-                ).float()
-                pixels = self.customAug(pixels / 255.0) if self.norm else pixels
-                # encoder
-                lang = lang_features if self.film else None
-                pixels = (
-                    self.encoder[key](pixels, lang=lang)
-                    if self.separate_encoders
-                    else self.encoder(pixels, lang=lang)
-                )
-                features.append(pixels)
-            if self.use_proprio:
-                obs[self.proprio_key] = pre_process(obs[self.proprio_key])
-                self.proprio_buffer.append(obs[self.proprio_key])
-                proprio = torch.as_tensor(
-                    np.array(self.proprio_buffer), device=self.device
-                ).float()
-                proprio = self.proprio_projector(proprio)
-                features.append(proprio)
-            features = torch.cat(features, dim=-1).view(-1, self.repr_dim)
-        else:
-            self.observation_buffer.append(obs[self.feature_key])
-            features = torch.as_tensor(
-                np.array(self.observation_buffer), device=self.device
+        # add to buffer
+        features = []
+        for key in self.keys:
+            if self.obs_type == "pixels":
+                to_append = self.test_aug(obs[key].transpose(1, 2, 0)).numpy()
+            else:
+                to_append = obs[self.feature_key]
+                
+            self.observation_buffer[key].append(to_append)
+            to_input = torch.as_tensor(
+                np.array(self.observation_buffer[key]), device=self.device
             ).float()
-            features = self.encoder(features)
+            if self.obs_type == "pixels":
+                to_input = self.customAug(to_input / 255.0) if self.norm else to_input
+    
+            # encoder
+            lang = lang_features if self.film else None
+            encoder_output = (
+                self.encoder[key](to_input, lang=lang)
+                if self.separate_encoders
+                else self.encoder(to_input, lang=lang)
+            )
+            features.append(encoder_output)
+        if self.use_proprio:
+            obs[self.proprio_key] = pre_process(obs[self.proprio_key])
+            self.proprio_buffer.append(obs[self.proprio_key])
+            proprio = torch.as_tensor(
+                np.array(self.proprio_buffer), device=self.device
+            ).float()
+            proprio = self.proprio_projector(proprio)
+            features.append(proprio)
+
+        features = torch.cat(features, dim=-1).view(-1, self.repr_dim)
 
         # prompt
         prompt_features = []
@@ -594,37 +587,32 @@ class BCAgent:
             else:
                 prompt_lang_features = None
 
-            if self.obs_type == "pixels":
-                for key in self.pixel_keys:
-                    pixel = torch.as_tensor(
-                        prompt[f"prompt_{key}"], device=self.device
-                    ).float()
-                    shape = pixel.shape
-                    # reshape lang features
-                    if self.use_language and reshape_lang:
-                        prompt_lang_features = prompt_lang_features.repeat(shape[0], 1)
-                        reshape_lang = False
-                    # augment
-                    pixel = self.customAug(pixel / 255.0) if self.norm else pixel
-                    # encode
-                    pixel = (
-                        self.encoder[key](pixel, lang=prompt_lang_features)
-                        if self.separate_encoders
-                        else self.encoder(pixel, lang=prompt_lang_features)
-                    )
-                    prompt_features.append(pixel)
-                if self.use_proprio:
-                    proprio = torch.as_tensor(
-                        prompt[f"prompt_{self.proprio_key}"], device=self.device
-                    ).float()
-                    proprio = self.proprio_projector(proprio)
-                    prompt_features.append(proprio)
-            else:
-                prompt_feat = torch.as_tensor(
-                    prompt[f"prompt_{self.feature_key}"], device=self.device
+            for key in self.keys:
+                to_input = torch.as_tensor(
+                    prompt[f"prompt_{key}"], device=self.device
                 ).float()
-                prompt_feat = self.encoder(prompt_feat)
-                prompt_features.append(prompt_feat)
+                shape = to_input.shape
+                # reshape lang features
+                if self.use_language and reshape_lang:
+                    prompt_lang_features = prompt_lang_features.repeat(shape[0], 1)
+                    reshape_lang = False
+                # augment
+                if self.obs_type == "pixels":
+                    to_input = self.customAug(to_input / 255.0) if self.norm else to_input
+                # encode
+                encoder_output = (
+                    self.encoder[key](to_input, lang=prompt_lang_features)
+                    if self.separate_encoders
+                    else self.encoder(to_input, lang=prompt_lang_features)
+                )
+                prompt_features.append(encoder_output)
+            if self.use_proprio:
+                proprio = torch.as_tensor(
+                    prompt[f"prompt_{self.proprio_key}"], device=self.device
+                ).float()
+                proprio = self.proprio_projector(proprio)
+                prompt_features.append(proprio)
+
         num_prompt_feats = len(prompt_features)
         if num_prompt_feats > 0:
             prompt_features = torch.cat(prompt_features, dim=-1).view(-1, self.repr_dim)
@@ -688,48 +676,43 @@ class BCAgent:
             lang_features = None
 
         # features
-        if self.obs_type == "pixels":
-            features = []
-            for key in self.pixel_keys:
-                pixel = data[key].float()
-                shape = pixel.shape
+        features = []
+        for key in self.keys:
+            to_input = data[key].float()
+            shape = to_input.shape
+
+            if self.obs_type == "pixels":
                 # rearrange
-                pixel = einops.rearrange(pixel, "b t c h w -> (b t) c h w")
+                to_input = einops.rearrange(to_input, "b t c h w -> (b t) c h w")
                 # augment
-                pixel = self.customAug(pixel / 255.0) if self.norm else pixel
-                # encode
-                lang = lang_features if self.film else None
-                if self.train_encoder:
-                    pixel = (
-                        self.encoder[key](pixel, lang=lang)
-                        if self.separate_encoders
-                        else self.encoder(pixel, lang=lang)
-                    )
-                else:
-                    with torch.no_grad():
-                        pixel = (
-                            self.encoder[key](pixel, lang=lang)
-                            if self.separate_encoders
-                            else self.encoder(pixel, lang=lang)
-                        )
-                pixel = einops.rearrange(pixel, "(b t) d -> b t d", t=shape[1])
-                features.append(pixel)
-            if self.use_proprio:
-                proprio = data[self.proprio_key].float()
-                proprio = self.proprio_projector(proprio)
-                features.append(proprio)
-            # concatenate
-            features = torch.cat(features, dim=-1).view(
-                action.shape[0], -1, self.repr_dim
-            )  # (B, T * num_feat_per_step, D)
-        else:
-            features = data[self.feature_key].float()
-            shape = features.shape
+                to_input = self.customAug(to_input / 255.0) if self.norm else to_input
+
+            # encode
+            lang = lang_features if self.film else None
             if self.train_encoder:
-                features = self.encoder(features)
+                encoder_output = (
+                    self.encoder[key](to_input, lang=lang)
+                    if self.separate_encoders
+                    else self.encoder(to_input, lang=lang)
+                )
             else:
                 with torch.no_grad():
-                    features = self.encoder(features)
+                    encoder_output = (
+                        self.encoder[key](to_input, lang=lang)
+                        if self.separate_encoders
+                        else self.encoder(to_input, lang=lang)
+                    )
+            if self.obs_type == "pixels":
+                encoder_output = einops.rearrange(encoder_output, "(b t) d -> b t d", t=shape[1])
+            features.append(encoder_output)
+        if self.use_proprio:
+            proprio = data[self.proprio_key].float()
+            proprio = self.proprio_projector(proprio)
+            features.append(proprio)
+        # concatenate
+        features = torch.cat(features, dim=-1).view(
+            action.shape[0], -1, self.repr_dim
+        )  # (B, T * num_feat_per_step, D)
 
         # prompt
         prompt_features = []
@@ -745,51 +728,46 @@ class BCAgent:
             else:
                 prompt_lang_features = None
 
-            if self.obs_type == "pixels":
-                for key in self.pixel_keys:
-                    pixel = data[f"prompt_{key}"].float()
-                    shape = pixel.shape
-                    # reshape lang features
-                    if self.use_language and reshape_lang:
-                        prompt_lang_features = prompt_lang_features.repeat(
-                            1, shape[1], 1
-                        )
-                        prompt_lang_features = einops.rearrange(
-                            prompt_lang_features, "b t d -> (b t) d"
-                        )
-                        reshape_lang = False
+            for key in self.keys:
+                to_input = data[f"prompt_{key}"].float()
+                shape = to_input.shape
+                # reshape lang features
+                if self.use_language and reshape_lang:
+                    prompt_lang_features = prompt_lang_features.repeat(
+                        1, shape[1], 1
+                    )
+                    prompt_lang_features = einops.rearrange(
+                        prompt_lang_features, "b t d -> (b t) d"
+                    )
+                    reshape_lang = False
+
+                if self.obs_type == "pixels":
                     # rearrange
-                    pixel = einops.rearrange(pixel, "b t c h w -> (b t) c h w")
+                    to_input = einops.rearrange(to_input, "b t c h w -> (b t) c h w")
                     # augment
-                    pixel = self.customAug(pixel / 255.0) if self.norm else pixel
-                    # encode
-                    if self.train_encoder:
-                        pixel = (
-                            self.encoder[key](pixel, lang=prompt_lang_features)
-                            if self.separate_encoders
-                            else self.encoder(pixel, lang=prompt_lang_features)
-                        )
-                    else:
-                        with torch.no_grad():
-                            pixel = (
-                                self.encoder[key](pixel, lang=prompt_lang_features)
-                                if self.separate_encoders
-                                else self.encoder(pixel, lang=prompt_lang_features)
-                            )
-                    pixel = einops.rearrange(pixel, "(b t) d -> b t d", t=shape[1])
-                    prompt_features.append(pixel)
-                if self.use_proprio:
-                    proprio = data[f"prompt_{self.proprio_key}"].float()
-                    proprio = self.proprio_projector(proprio)
-                    prompt_features.append(proprio)
-            else:
-                prompt_feat = data[f"prompt_{self.feature_key}"].float()
+                    to_input = self.customAug(to_input / 255.0) if self.norm else to_input
+                # encode
                 if self.train_encoder:
-                    prompt_feat = self.encoder(prompt_feat)
+                    encoder_output = (
+                        self.encoder[key](to_input, lang=prompt_lang_features)
+                        if self.separate_encoders
+                        else self.encoder(to_input, lang=prompt_lang_features)
+                    )
                 else:
                     with torch.no_grad():
-                        prompt_feat = self.encoder(prompt_feat)
-                prompt_features.append(prompt_feat)
+                        encoder_output = (
+                            self.encoder[key](to_input, lang=prompt_lang_features)
+                            if self.separate_encoders
+                            else self.encoder(to_input, lang=prompt_lang_features)
+                        )
+                if self.obs_type == "pixels":
+                    encoder_output = einops.rearrange(encoder_output, "(b t) d -> b t d", t=shape[1])
+                prompt_features.append(encoder_output)
+            if self.use_proprio:
+                proprio = data[f"prompt_{self.proprio_key}"].float()
+                proprio = self.proprio_projector(proprio)
+                prompt_features.append(proprio)
+
         num_prompt_feats = len(prompt_features) if len(prompt_features) > 0 else 0
         if num_prompt_feats > 0:
             prompt_features = torch.cat(prompt_features, dim=-1).view(
@@ -816,7 +794,7 @@ class BCAgent:
 
             if self.train_encoder:
                 self.encoder_opt.zero_grad(set_to_none=True)
-            if self.obs_type == "pixels" and self.use_proprio:
+            if self.use_proprio:
                 self.proprio_opt.zero_grad(set_to_none=True)
             if self.use_language:
                 self.language_opt.zero_grad(set_to_none=True)
@@ -824,7 +802,7 @@ class BCAgent:
             actor_loss["actor_loss"].backward()
             if self.train_encoder:
                 self.encoder_opt.step()
-            if self.obs_type == "pixels" and self.use_proprio:
+            if self.use_proprio:
                 self.proprio_opt.step()
             if self.use_language:
                 self.language_opt.step()
@@ -868,7 +846,7 @@ class BCAgent:
         opt_keys = ["actor_opt"]
         if self.train_encoder:
             opt_keys += ["encoder_opt"]
-        if self.obs_type == "pixels" and self.use_proprio:
+        if self.use_proprio:
             model_keys += ["proprio_projector"]
             opt_keys += ["proprio_opt"]
         if self.use_language:
@@ -880,7 +858,7 @@ class BCAgent:
         }
         if "encoder" in model_keys:
             if self.separate_encoders:
-                for key in self.pixel_keys:
+                for key in self.keys:
                     payload[f"encoder_{key}"] = self.encoder[key].state_dict()
             else:
                 payload["encoder"] = self.encoder.state_dict()
@@ -903,13 +881,13 @@ class BCAgent:
     def load_snapshot(self, payload, eval=False, load_opt=False):
         # models
         model_keys = ["actor", "encoder"]
-        if self.obs_type == "pixels" and self.use_proprio:
+        if self.use_proprio:
             model_keys += ["proprio_projector"]
         if self.use_language:
             model_keys += ["language_projector"]
         for k in model_keys:
             if k == "encoder" and self.separate_encoders:
-                for key in self.pixel_keys:
+                for key in self.keys:
                     self.encoder[key].load_state_dict(payload[f"encoder_{key}"])
             else:
                 self.__dict__[k].load_state_dict(payload[k])
@@ -934,7 +912,7 @@ class BCAgent:
             opt_keys = ["actor_opt"]
             if self.train_encoder:
                 opt_keys += ["encoder_opt"]
-            if self.obs_type == "pixels" and self.use_proprio:
+            if self.use_proprio:
                 opt_keys += ["proprio_opt"]
             if self.use_language:
                 opt_keys += ["language_opt"]
