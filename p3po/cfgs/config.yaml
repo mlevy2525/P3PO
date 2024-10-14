@@ -1,0 +1,17 @@
+defaults:
+  - _self_
+
+root_dir: /your/path/to/P3PO
+
+task_name: ""
+device: "cuda"
+
+width: -1
+height: -1
+image_size_multiplier: 2
+
+ensemble_size: 8
+dift_layer: 1
+dift_steps: 50
+
+num_points: -1
