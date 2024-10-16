@@ -7,20 +7,15 @@ The first thing you'll need to do is set up the conda environment and download t
 ```
 conda env create -f conda_env.yml
 ```
-- Activate the environment using `conda activate p3-po`. Please note that different computers and environments will require different installations for pytorch and the cudatoolkit. We install them with pip install, but make sure that this is compatible with your computer's version of cuda. If it is not you should be fine to just uninstall pytorch and download it as makes sense for your set up.
+- Activate the environment using `conda activate p3po`. Please note that different computers and environments will require different installations for pytorch and the cudatoolkit. We install them with pip install, but make sure that this is compatible with your computer's version of cuda. If it is not you should be fine to just uninstall pytorch and download it as makes sense for your set up.
 
-- Download the submodules with the following command
-```
-git submodule update --init --recursive
-```
-
-- You can install these submodules and relevant packages by running the setup.sh file. Make sure to run this from the root repository or the models may get installed in the wrong location.
+- You can download and install the submodules and relevant packages by running the setup.sh file. Make sure to run this from the root repository or the models may get installed in the wrong location.
 ```
 ./setup.sh
 ```
 
 ## Labeling the points
-- The next thing you will need to do is label your "prescriptive points". We have included a jupyter notebook to do this in the P3PO/p3po/data_generation folder.
+- The next thing you will need to do is label your "prescriptive points". We have included a jupyter notebook to do this in the `P3PO/p3po/data_generation` folder.
 
 - Open the label_points notebook. In the first cell you will need to set several variables.
 
@@ -39,7 +34,7 @@ git submodule update --init --recursive
 ## Labeling the data
 - Now that you have selected your points you can generate your dataset using the generate_points.py script.
 
-- Open the generate_points.py script and finish the 3 TODOs labeled there. Additionally, make sure to set your path and task name in the config.yaml file. If you labeled additional points in the prior step you will need to set num_points here. If not you can leave this set to -1.
+- Open the generate_points.py script and finish the 3 TODOs labeled there. Additionally, make sure to set your path and task name in the config.yaml file. This is located at `P3PO/p3po/cfgs/suite/p3po.yaml`. If you labeled additional points in the prior step you will need to set num_points here. If not you can leave this set to -1.
 
 ```
 python generate_points.py

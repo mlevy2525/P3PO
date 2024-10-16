@@ -3,6 +3,7 @@ defaults:
 
 suite: metaworld
 scenes:
+  - assembly
   - basketball
   - bin_picking
   - button_press
@@ -35,6 +36,7 @@ scenes:
   - window_open
 
 tasks:
+  - assembly: assembly-v2
   - basketball: basketball-v2
   - bin_picking: bin-picking-v2
   - button_press: button-press-v2

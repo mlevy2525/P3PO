@@ -285,16 +285,20 @@ class BCAgent:
             elif self.encoder_type == "patch":
                 pass
         else:
+            total_vals = 1
+            for axis in obs_shape:
+                total_vals *= axis
+
             if self.separate_encoders:
                 for key in self.keys:
-                    self.encoder[key] = MLP(obs_shape[0], hidden_channels=[512, 512]).to(device)
+                    self.encoder[key] = MLP(total_vals, hidden_channels=[512, 512]).to(device)
                     model_size += sum(
                         p.numel()
                         for p in self.encoder[key].parameters()
                         if p.requires_grad
                     )
             else:
-                self.encoder = MLP(obs_shape[0], hidden_channels=[512, 512]).to(device)
+                self.encoder = MLP(total_vals, hidden_channels=[512, 512]).to(device)
                 model_size += sum(
                     p.numel() for p in self.encoder.parameters() if p.requires_grad
                 )
@@ -548,7 +552,7 @@ class BCAgent:
             if self.obs_type == "pixels":
                 to_append = self.test_aug(obs[key].transpose(1, 2, 0)).numpy()
             else:
-                to_append = obs[self.feature_key]
+                to_append = obs[key]
                 
             self.observation_buffer[key].append(to_append)
             to_input = torch.as_tensor(

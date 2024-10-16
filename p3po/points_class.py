@@ -32,6 +32,9 @@ class PointsClass():
             
         height : int
             The height that should be used in the correspondence model.
+
+        image_size_multiplier : int
+            The size multiplier for the image in the correspondence model.
             
         ensemble_size : int
             The size of the ensemble for the DIFT model.
@@ -61,6 +64,7 @@ class PointsClass():
         self.transform = transforms.Compose([ 
                             transforms.PILToTensor()])
         self.image_list = torch.tensor([]).to(device)
+        self.depth = np.array([])
 
         if num_points == -1:
             self.num_points = self.initial_coords.shape[0]
@@ -98,6 +102,7 @@ class PointsClass():
         """
 
         self.image_list = torch.tensor([]).to(self.device)
+        self.depth = torch.tensor([]).to(self.device)
 
     def find_semantic_similar_points(self):
         """
@@ -133,7 +138,13 @@ class PointsClass():
             The depth map for the current image. Depth is height x width.
         """
 
-        self.depth = depth.clone()
+        if self.image_list.shape[0] == 8:
+            self.depth = self.depth[1:]
+
+        while self.depth.shape[0] < 8:
+            if self.depth.shape[0] == 0:
+                self.depth = depth[None, ...].copy()
+            self.depth = np.concatenate((self.depth, depth[None, ...].copy()), axis=0)
 
     def track_points(self, is_first_step=False, one_frame=True):
         """
@@ -190,9 +201,9 @@ class PointsClass():
                 x /= (width/2)
                 y /= (height/2)
 
-                final_points[frame_num, point] = torch.tensor([y, x, depth])
+                final_points[frame_num, point] = torch.tensor([x, y, depth])
 
-        return final_points
+        return final_points.reshape(last_n_frames, -1)
 
     def plot_image(self, last_n_frames=1):
         """

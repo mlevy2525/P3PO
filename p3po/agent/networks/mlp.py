@@ -122,3 +122,6 @@ class MLP(torch.nn.Sequential):
         layers.append(torch.nn.Dropout(dropout, **params))
 
         super().__init__(*layers)
+
+    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        return super().forward(x)

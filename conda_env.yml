@@ -1,4 +1,4 @@
-name: p3-po
+name: p3po
 channels:
   - defaults
 dependencies:
@@ -31,7 +31,7 @@ dependencies:
     - sentence-transformers
     - einops==0.7.0
     - decord
-    - mujoco
+    - mujoco==2.3.7
     - dm_control
     - diffusers==0.15.0
     - ipywidgets
@@ -41,3 +41,4 @@ dependencies:
     - torchvision
     - torchaudio
     - xformers
+    - robomimic

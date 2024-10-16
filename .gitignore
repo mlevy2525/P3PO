@@ -177,3 +177,4 @@ coordinates/images/*
 p3po/data_generation/videos/*
 processed_data/points/*
 processed_data/graphs/*
+expert_demos/metaworld/*

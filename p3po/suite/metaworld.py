@@ -15,6 +15,7 @@ from dm_control.utils import rewards
 import cv2
 import random
 import metaworld
+import mujoco
 
 from sentence_transformers import SentenceTransformer
 
@@ -54,6 +55,11 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
             low=0, high=255, shape=dummy_obs.shape, dtype=dummy_obs.dtype
         )
         self.action_space = self._env.action_space
+
+        cam_id = mujoco.mj_name2id(self._env.mujoco_renderer.model,
+                                   mujoco.mjtObj.mjOBJ_CAMERA,
+                                   "corner2")
+        self._env.mujoco_renderer.camera_id = cam_id
 
         # task emb
         self.task_emb = sentence_encoder.encode(name)
@@ -99,10 +105,12 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         obs = {}
         obs["features"] = np.zeros(self.max_state_dim, dtype=np.float32)
         state = self._env.reset(**kwargs)[0].astype(np.float32)
+        state, _, _, _, _ = self._env.step(np.zeros(self.action_space.shape))
         obs["features"][: state.shape[0]] = state
         obs["pixels"] = self.get_frame()
         obs["task_emb"] = self.task_emb
         obs["goal_achieved"] = False
+        obs["depth"] = self.get_depth()
         return obs
 
     def step(self, action):
@@ -112,6 +120,7 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         obs["pixels"] = self.get_frame()
         obs["task_emb"] = self.task_emb
         obs["goal_achieved"] = info["success"]
+        obs["depth"] = self.get_depth()
         self.episode_step += 1
         if self.episode_step == self.max_path_length:
             done = True
@@ -135,9 +144,23 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         width = self._width if width is None else width
         height = self._height if height is None else height
         # self._env.mujoco_renderer.viewer.make_context_current()
-        frame = self._env.render()[::-1]
+        frame = self._env.render()[::-1, :]
         frame = cv2.resize(frame, (width, height))
         return frame
+
+    def get_depth(self, width=None, height=None):
+        width = self._width if width is None else width
+        height = self._height if height is None else height
+        depth = self._env.mujoco_renderer.render("depth_array")[::-1, :]
+
+        extent = self._env.model.stat.extent
+        near = self._env.model.vis.map.znear * extent
+        far = self._env.model.vis.map.zfar * extent
+        depth = near / (1 - depth * (1 - near / far))
+        depth = depth * (depth < 10)
+        
+        depth = cv2.resize(depth, (width, height))
+        return depth
 
     def __getattr__(self, name):
         return getattr(self._env, name)
@@ -223,6 +246,7 @@ class FrameStackWrapper(dm_env.Environment):
         obs["pixels"] = np.concatenate(list(self._frames), axis=0)
         obs["task_emb"] = time_step.observation["task_emb"]
         obs["goal_achieved"] = time_step.observation["goal_achieved"]
+        obs["depth"] = time_step.observation["depth"]
         return time_step._replace(observation=obs)
 
     def _extract_pixels(self, time_step):
