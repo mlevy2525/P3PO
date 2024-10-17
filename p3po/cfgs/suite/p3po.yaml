@@ -15,4 +15,5 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: -1
+num_points: 5
+dimensions: 3

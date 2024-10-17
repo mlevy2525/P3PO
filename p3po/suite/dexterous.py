@@ -51,10 +51,10 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
 
             # Action spec
             action_spec = spaces.Box(
-            low=np.array([-1] * 12, dtype=np.float32),  # Actions are 12 + 7
-            high=np.array([1] * 12, dtype=np.float32),
-            dtype=np.float32,
-        )
+                low=np.array([-1] * 12, dtype=np.float32),  # Actions are 12 + 7
+                high=np.array([1] * 12, dtype=np.float32),
+                dtype=np.float32,
+            )
             self._action_spec = specs.Array(
                 shape=action_spec.shape, dtype=action_spec.dtype, name="action"
             )
@@ -83,7 +83,11 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
             )
 
             # Action spec
-            action_spec = self._env.action_space
+            action_spec = spaces.Box(
+                low=np.array([-1] * 12, dtype=np.float32),  # Actions are 12 + 7
+                high=np.array([1] * 12, dtype=np.float32),
+                dtype=np.float32,
+            )
             self._action_spec = specs.Array(
                 shape=action_spec.shape, dtype=action_spec.dtype, name="action"
             )

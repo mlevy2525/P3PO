@@ -12,7 +12,7 @@ from utilities.correspondence import Correspondence
 from utilities.depth import Depth
 
 class PointsClass():
-    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_points, **kwargs):
+    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_points, dimensions, **kwargs):
         """
         Initialize the Points Class for finding key points in the episode.
 
@@ -44,6 +44,12 @@ class PointsClass():
 
         dift_steps : int
             The number of steps or iterations for feature extraction in the DIFT model.
+
+        num_points : int
+            The number of points to track in the episode. If set to -1, it will track all points.
+
+        dimensions : int
+            The number of dimensions for the key points. This is usually 3 for x, y, and depth. If set to 2 will ignore depth.
         """
 
         # Set up the correspondence model and find the expert image features
@@ -72,6 +78,7 @@ class PointsClass():
             self.num_points = num_points
 
         self.device = device
+        self.dimensions = dimensions
 
     # Image passed in here must be in RGB format
     def add_to_image_list(self, image):
@@ -184,24 +191,30 @@ class PointsClass():
             The list of points for the current frame.
         """
 
-        final_points = torch.zeros((last_n_frames, self.num_points, 3))
+        final_points = torch.zeros((last_n_frames, self.num_points, self.dimensions))
         width = self.image_list.shape[4]
         height = self.image_list.shape[3]
 
         for frame_num in range(last_n_frames):
             for point in range(self.num_points):
                 frame_idx = -1 * (last_n_frames - frame_num)
-                try:
-                    depth = self.depth[frame_idx, int(self.tracks[0, frame_idx, point][1]), int(self.tracks[0, frame_idx, point][0])]
-                except:
-                    depth = 0
 
-                x = (self.tracks[0, frame_idx, point][0] - width/2) * depth
-                y = (self.tracks[0, frame_idx, point][1] - height/2) * depth
-                x /= (width/2)
-                y /= (height/2)
+                if self.dimensions == 3:
+                    try:
+                        depth = self.depth[frame_idx, int(self.tracks[0, frame_idx, point][1]), int(self.tracks[0, frame_idx, point][0])]
+                    except:
+                        depth = 0
 
-                final_points[frame_num, point] = torch.tensor([x, y, depth])
+                    x = (self.tracks[0, frame_idx, point][0] - width/2) * depth
+                    y = (self.tracks[0, frame_idx, point][1] - height/2) * depth
+                    x /= (width/2)
+                    y /= (height/2)
+
+                    final_points[frame_num, point] = torch.tensor([x, y, depth])
+                else:
+                    x = self.tracks[0, frame_idx, point][0]
+                    y = self.tracks[0, frame_idx, point][1]
+                    final_points[frame_num, point] = torch.tensor([x, y])
 
         return final_points.reshape(last_n_frames, -1)
 
