@@ -49,7 +49,7 @@ class Actor(nn.Module):
                     block_size=65,
                     input_dim=repr_dim,
                     output_dim=hidden_dim,
-                    n_layer=8,
+                    n_layer=4,
                     n_head=4,
                     n_embd=hidden_dim,
                     dropout=0.1,

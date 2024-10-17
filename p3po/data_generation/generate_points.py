@@ -13,7 +13,7 @@ from points_class import PointsClass
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
 read_from_pickle = True
-pickle_path = "/fs/cfar-projects/waypoint_rl/BAKU_final/P3PO/expert_demos/metaworld/assembly.pkl"
+pickle_path = "/fs/cfar-projects/waypoint_rl/BAKU_final/P3PO/expert_demos/metaworld/basketball.pkl"
 pickle_image_key = "pixels"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle

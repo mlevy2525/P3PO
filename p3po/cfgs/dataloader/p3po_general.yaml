@@ -1,0 +1,16 @@
+bc_dataset:
+  _target_: read_data.p3po_general.BCDataset
+  path: '${root_dir}/expert_demos'
+  processed_path: '${root_dir}/processed_data'
+  suite: ${suite.task.suite}
+  tasks: ${suite.task.tasks}
+  num_demos_per_task: ${num_demos_per_task}
+  obs_type: ${obs_type}
+  history: ${suite.history}
+  history_len: ${suite.history_len}
+  prompt: ${prompt}
+  temporal_agg: ${temporal_agg}
+  num_queries: ${num_queries}
+  training_keys: ${training_keys}
+  img_size: 84
+  store_actions: true

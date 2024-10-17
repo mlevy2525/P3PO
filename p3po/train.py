@@ -79,6 +79,8 @@ class WorkspaceIL:
                 except yaml.YAMLError as exc:
                     print(exc)
 
+            points_cfg["root_dir"] = self.cfg.root_dir
+
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):
                 self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class)

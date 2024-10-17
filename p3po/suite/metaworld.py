@@ -394,7 +394,6 @@ def make(
     max_state_dim,
     eval,
 ):
-    # Convert task_names, which is a list, to a dictionary
     tasks = {task_name: scene[task_name] for scene in tasks for task_name in scene}
 
     envs = []
