@@ -9,7 +9,7 @@ dependencies:
   - pyparsing=2.4.7
   - jupyterlab=3.0.14
   - scikit-image=0.18.1
-  - llvm-openmp=19.1.0
+  - llvm-openmp #=19.1.0
   - pip:
     - pre-commit
     - black
@@ -40,5 +40,7 @@ dependencies:
     - torch
     - torchvision
     - torchaudio
-    - xformers
+    - wheel
+    - setuptools
+    - ninja
     - robomimic

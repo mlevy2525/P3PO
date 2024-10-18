@@ -22,5 +22,6 @@ pip install -e .
 cd ../
 
 cd dift
+pip install xformers
 git checkout main
 cd ../
