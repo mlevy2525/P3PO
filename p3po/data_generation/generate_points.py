@@ -46,6 +46,9 @@ if read_from_pickle:
 else:
     num_demos = len(video_paths)
 
+if write_videos:
+    Path(f"{cfg['root_dir']}/p3po/data_generation/videos").mkdir(parents=True, exist_ok=True)
+
 # Initialize the PointsClass object
 points_class = PointsClass(**cfg)
 episode_list = []
