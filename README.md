@@ -14,6 +14,35 @@ conda env create -f conda_env.yml
 ./setup.sh
 ```
 
+## Setting up data
+- You can generate data for metaworld by running
+```
+cd p3po/data_generation
+python generate_metaworld.py
+```
+- You can also use your own data for p3po. Please make sure that the data is in the following format.
+
+## Dataset Structure
+
+- The dataset should be structured as a Python dictionary with the following format:
+
+```
+data = {
+    "actions": np.ndarray,  # A NumPy array of NumPy arrays where each outer array represents an episode and each inner array contains the actions taken at each step in the episode.
+    "observations": [       # A list where each element represents an episode.
+        {
+            "pixels": np.ndarray,  # A NumPy array representing the pixel data for each step in the episode.
+            "features": np.ndarray    # A NumPy array representing the feature data for each step in the episode.
+        },
+        ...
+    ]
+}
+```
+
+- You do not need to include specifically "pixels" and "features" as keys if the observation dictionary, but please include necessary observations here.
+
+- Save this data to a pickle file to be used in future steps.
+
 ## Labeling the points
 - The next thing you will need to do is label your "prescriptive points". We have included a jupyter notebook to do this in the `P3PO/p3po/data_generation` folder.
 
