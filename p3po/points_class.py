@@ -48,12 +48,13 @@ class PointsClass():
 
         # Set up the correspondence model and find the expert image features
         self.correspondence_model = Correspondence(device, root_dir + "/dift/", width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps)
-            
         try:
             self.initial_coords = np.array(pickle.load(open("%s/coordinates/coords/%s.pkl" % (root_dir, task_name), "rb")))
         except Exception as e:
             print(e)
             print("Setting coordinates to random values")
+            if num_points == -1:
+                num_points = 100
             self.initial_coords = np.random.rand(num_points, 3) * 256
             self.initial_coords[:, 0] = 0
 
