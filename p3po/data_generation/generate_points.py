@@ -9,6 +9,7 @@ import imageio
 import torch
 
 from points_class import PointsClass
+from pathlib import Path
 
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
@@ -131,4 +132,5 @@ final_graph['pickle_path'] = pickle_path
 final_graph['video_paths'] = video_paths
 final_graph['cfg'] = cfg
 
+Path(f"{cfg['root_dir']}/processed_data/points").mkdir(parents=True, exist_ok=True)
 pickle.dump(final_graph, open(f"{cfg['root_dir']}/processed_data/points/{cfg['task_name']}.pkl", "wb"))
