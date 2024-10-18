@@ -63,7 +63,9 @@ data = {
 ## Labeling the data
 - Now that you have selected your points you can generate your dataset using the generate_points.py script.
 
-- Open the generate_points.py script and finish the 3 TODOs labeled there. Additionally, make sure to set your path and task name in the config.yaml file. This is located at `P3PO/p3po/cfgs/suite/p3po.yaml`. If you labeled additional points in the prior step you will need to set num_points here. If not you can leave this set to -1.
+- Open the generate_points.py script and finish the 3 TODOs labeled there
+
+- Set your path and task name in the config file located at `P3PO/p3po/cfgs/suite/p3po.yaml`. If you labeled additional points in the prior step you will need to set num_points here. If not you can leave this set to -1.
 
 ```
 python generate_points.py
