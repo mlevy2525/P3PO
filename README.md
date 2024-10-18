@@ -1,7 +1,7 @@
 # P3-PO: Prescriptive Point Priors for Visuo-Spatial Generalization of Robot Policies
 
 ## Installation
-The first thing you'll need to do is set up the conda environment and download the submodules.
+The first thing you'll need to do is clone the environment. Once this is done you will set up the conda environment and download the submodules.
 
 - Clone the repository and create a conda environment using the provided `conda_env.yml` file.
 ```
