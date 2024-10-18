@@ -14,7 +14,6 @@ from dm_control.utils import rewards
 
 import cv2
 import random
-import metaworld
 import mujoco
 
 from sentence_transformers import SentenceTransformer
@@ -33,36 +32,32 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
     def __init__(
         self,
         env,
-        name,
-        ml1,
         width=84,
         height=84,
         max_path_length=125,
         max_state_dim=0,
+        depth_keys=[],
+        mujoco_env = False,
     ):
-        name = name.replace("_", " ")
-        self.name = name
+        self.name = "Gym Environment"
 
         self._env = env
-        self.ml1 = ml1
         self._width = width
         self._height = height
         self.max_path_length = max_path_length
         self.max_state_dim = max_state_dim
+        self.depth_keys = depth_keys
+        self.mujoco_env = mujoco_env
+
         # dummy render to init opengl context
-        dummy_obs = self.get_frame()
+        dummy_obs = self.render()
         self.observation_space = spaces.Box(
             low=0, high=255, shape=dummy_obs.shape, dtype=dummy_obs.dtype
         )
         self.action_space = self._env.action_space
 
-        cam_id = mujoco.mj_name2id(self._env.mujoco_renderer.model,
-                                   mujoco.mjtObj.mjOBJ_CAMERA,
-                                   "corner2")
-        self._env.mujoco_renderer.camera_id = cam_id
-
         # task emb
-        self.task_emb = sentence_encoder.encode(name)
+        self.task_emb = sentence_encoder.encode(self.name)
 
         # Action spec
         wrapped_action_spec = self.action_space
@@ -86,41 +81,30 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
             maximum=255,
             name="observation",
         )
-        self._obs_spec["features"] = specs.BoundedArray(
-            shape=(self.max_state_dim,),
-            dtype=np.float32,
-            minimum=-np.inf,
-            maximum=np.inf,
-            name="features",
-        )
 
     def reset(self, **kwargs):
-        # Set random goal
-        task = random.choice(self.ml1.train_tasks)
-        self._env.set_task(task)  # Set task
-
         # Set episode step to 0
         self.episode_step = 0
 
         obs = {}
-        obs["features"] = np.zeros(self.max_state_dim, dtype=np.float32)
         state = self._env.reset(**kwargs)[0].astype(np.float32)
         state, _, _, _, _ = self._env.step(np.zeros(self.action_space.shape))
-        obs["features"][: state.shape[0]] = state
         obs["pixels"] = self.get_frame()
         obs["task_emb"] = self.task_emb
         obs["goal_achieved"] = False
-        obs["depth"] = self.get_depth()
+        if len(self.depth_keys) > 0:
+            obs["depth"] = self.get_depth()
         return obs
 
     def step(self, action):
         observation, reward, _, done, info = self._env.step(action)
         obs = {}
-        obs["features"] = observation.astype(np.float32)
         obs["pixels"] = self.get_frame()
         obs["task_emb"] = self.task_emb
         obs["goal_achieved"] = info["success"]
-        obs["depth"] = self.get_depth()
+        if len(self.depth_keys) > 0:
+            obs["depth"] = self.get_depth()
+            
         self.episode_step += 1
         if self.episode_step == self.max_path_length:
             done = True
@@ -151,13 +135,16 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
     def get_depth(self, width=None, height=None):
         width = self._width if width is None else width
         height = self._height if height is None else height
-        depth = self._env.mujoco_renderer.render("depth_array")[::-1, :]
+        if self.mujoco_env:
+            depth = self._env.mujoco_renderer.render("depth_array")[::-1, :]
 
-        extent = self._env.model.stat.extent
-        near = self._env.model.vis.map.znear * extent
-        far = self._env.model.vis.map.zfar * extent
-        depth = near / (1 - depth * (1 - near / far))
-        depth = depth * (depth < 10)
+            extent = self._env.model.stat.extent
+            near = self._env.model.vis.map.znear * extent
+            far = self._env.model.vis.map.zfar * extent
+            depth = near / (1 - depth * (1 - near / far))
+            depth = depth * (depth < 10)
+        else:
+            depth = self._env.get_depth()
         
         depth = cv2.resize(depth, (width, height))
         return depth
@@ -383,72 +370,32 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
 
 
 def make(
-    scenes,
-    tasks,
     frame_stack,
     action_repeat,
-    seed,
     height,
     width,
     max_episode_len,
     max_state_dim,
-    eval,
+    depth_keys,
+    mujoco_env
 ):
-    # Convert task_names, which is a list, to a dictionary
-    try:
-        tasks = {task_name: scene[task_name] for scene in tasks for task_name in scene}
-    except:
-        pass
 
-    envs = []
-    task_descriptions = []
-    idx2name = {}
-    idx = 0
+    #TODO: SET ENV TO GYM ENVIRONMENT HERE
+    env = None
 
-    for scene in scenes:
-        try:
-            name = tasks[scene]
-        except:
-            name = "assembly-v2"
-            
-        ml1 = metaworld.ML1(name)  # Construct the benchmark, sampling tasks
-        env = ml1.train_classes[name](
-            render_mode="rgb_array"
-        )  # Create an environment with task
-        env.seed(seed)
+    # add wrappers
+    env = RGBArrayAsObservationWrapper(
+        env,
+        width=width,
+        height=height,
+        max_path_length=max_episode_len,
+        max_state_dim=max_state_dim,
+        depth_keys=depth_keys,
+        mujoco_env=mujoco_env
+    )
+    env = ActionDTypeWrapper(env, np.float32)
+    env = ActionRepeatWrapper(env, action_repeat)
+    env = FrameStackWrapper(env, frame_stack)
+    env = ExtendedTimeStepWrapper(env)
 
-        # Set a random task to be able to use env
-        task = random.choice(ml1.train_tasks)
-        env.set_task(task)  # Set task
-        env.camera_name = CAMERA[name]
-
-        # add wrappers
-        env = RGBArrayAsObservationWrapper(
-            env,
-            scene,
-            ml1,
-            width=width,
-            height=height,
-            max_path_length=max_episode_len,
-            max_state_dim=max_state_dim,
-        )
-        env = ActionDTypeWrapper(env, np.float32)
-        env = ActionRepeatWrapper(env, action_repeat)
-        env = FrameStackWrapper(env, frame_stack)
-        env = ExtendedTimeStepWrapper(env)
-
-        envs.append(env)
-        task_descriptions.append(scene)
-        idx2name[idx] = scene
-        idx += 1
-
-        if not eval:
-            break
-
-    # write task descriptions to file
-    if eval:
-        with open("task_names_env.txt", "w") as f:
-            for idx in idx2name:
-                f.write(f"{idx}: {idx2name[idx]}\n")
-
-    return envs, task_descriptions
+    return [env], "gym environment"

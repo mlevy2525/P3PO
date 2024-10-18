@@ -4,7 +4,7 @@ defaults:
 
 root_dir: /fs/cfar-projects/waypoint_rl/BAKU_final/P3PO
 
-task_name: "assembly"
+task_name: ""
 device: "cuda"
 
 width: -1
@@ -15,4 +15,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: 11
+num_points: 5
