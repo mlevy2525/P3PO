@@ -13,7 +13,7 @@ from points_class import PointsClass
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
 read_from_pickle = True
-pickle_path = "/fs/cfar-projects/waypoint_rl/BAKU_final/P3PO/expert_demos/metaworld/assembly.pkl"
+pickle_path = "/path/to/pickle.pkl"
 pickle_image_key = "pixels"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
@@ -29,7 +29,8 @@ video_paths = []
 # TODO: Set to true if you want to save a video of the points being tracked
 write_videos = True
 
-# TODO:  If you want to subsample the frames, set the subsample rate here.
+# TODO:  If you want to subsample the frames, set the subsample rate here. Note you will have to update your dataset to 
+# reflect the subsampling rate, we do not do this for you.
 subsample = 1
 
 with open("../cfgs/suite/p3po.yaml") as stream:

@@ -2,7 +2,7 @@ defaults:
   - _self_
   - task: p3po
 
-root_dir: /fs/cfar-projects/waypoint_rl/BAKU_final/P3PO
+root_dir: /path/to/root/directory
 
 task_name: ""
 device: "cuda"
@@ -15,4 +15,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: 5
+num_points: -1

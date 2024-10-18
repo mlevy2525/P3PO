@@ -27,6 +27,8 @@ def make_agent(obs_spec, action_spec, cfg):
         obs_shape[key] = obs_spec[key].shape
     if cfg.use_proprio:
         obs_shape[cfg.suite.proprio_key] = obs_spec[cfg.suite.proprio_key].shape
+    for key in cfg.training_keys:
+        obs_shape[key] = obs_spec[key].shape
     obs_shape[cfg.suite.feature_key] = obs_spec[cfg.suite.feature_key].shape
     cfg.agent.obs_shape = obs_shape
     cfg.agent.action_shape = action_spec.shape
@@ -53,7 +55,7 @@ class WorkspaceIL:
         self.logger = Logger(self.work_dir, use_tb=self.cfg.use_tb)
         # create envs
         self.cfg.suite.task_make_fn.max_episode_len = (
-            self.expert_replay_loader.dataset._max_episode_len
+            self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
         )
         self.cfg.suite.task_make_fn.max_state_dim = (
             self.expert_replay_loader.dataset._max_state_dim
@@ -63,6 +65,20 @@ class WorkspaceIL:
                 self.expert_replay_loader.dataset._max_action_dim
             )
         self.env, self.task_descriptions = hydra.utils.call(self.cfg.suite.task_make_fn)
+        if self.cfg.use_p3po:
+            from suite.p3po import P3POWrapper
+            from points_class import PointsClass
+            import yaml
+
+            with open(f"{self.cfg.root_dir}/p3po/cfgs/suite/p3po.yaml") as stream:
+                try:
+                    points_cfg = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    print(exc)
+
+            points_class = PointsClass(**points_cfg)
+            for i in range(len(self.env)):
+                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class)
 
         # create agent
         self.agent = make_agent(
