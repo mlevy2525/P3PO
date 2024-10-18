@@ -48,11 +48,6 @@ class PointsClass():
 
         # Set up the correspondence model and find the expert image features
         self.correspondence_model = Correspondence(device, root_dir + "/dift/", width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps)
-
-        if num_points == -1:
-            self.num_points = self.initial_coords.shape[0]
-        else:
-            self.num_points = num_points
             
         try:
             self.initial_coords = np.array(pickle.load(open("%s/coordinates/coords/%s.pkl" % (root_dir, task_name), "rb")))
@@ -84,6 +79,11 @@ class PointsClass():
                             transforms.PILToTensor()])
         self.image_list = torch.tensor([]).to(device)
         self.depth = np.array([])
+
+        if num_points == -1:
+            self.num_points = self.initial_coords.shape[0]
+        else:
+            self.num_points = num_points
 
         self.device = device
 
