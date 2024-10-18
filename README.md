@@ -90,6 +90,19 @@ python train.py agent=baku suite=xarm_env dataloader=p3po_xarm suite.task.tasks[
 python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.tasks[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
 ```
 
+## Evaluating P3PO
+- Before you evaluate set your root directory in the config_eval.yaml.
+
+- You can evaluate metaworld tasks with the following command. Change the scene accordingly.
+
+```
+python eval.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.task.scenes=[assembly] use_proprio=false  suite.hidden_dim=256 bc_weight=/path/to/model
+```
+
+- Follow the same patten to evaluate other environments.
+
+- If you want to run on your own environment we include a template in suite/p3po_general. On line 383 there is a TODO where you will need to set env to a custom gym environment. Note that if you wish to use ground truth depth your environment must have a get_depth() method. If you want to use DepthAnything set depth_keys in the config file to an empty list.
+
 
 
 
