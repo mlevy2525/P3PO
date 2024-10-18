@@ -67,6 +67,25 @@ data = {
 
 ```
 python generate_points.py
+
+```
+
+## Training P3PO
+- Once you have generated your dataset you can train it. Before you do this set your root directory in the main config.yaml file and make sure that the suite/p3po.yaml file is still correct for the environment you wish to train on.
+
+- The following script can be used to train the metaworld assembly task. You can train a different task by replacing assembly here.
+```
+python train.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.hidden_dim=256 use_proprio=false suite.task.scenes=[assembly] eval=true save_train_video=true
+```
+
+- You can train an xarm environment using the following script. Make sure the task name is aligned with the name of the dataset.
+```
+python train.py agent=baku suite=xarm_env dataloader=p3po_xarm suite.task.tasks[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
+```
+
+- If you are not using one of our suites you can train a general dataset using.  Make sure the task name is aligned with the name of the dataset.
+```
+python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.tasks[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
 ```
 
 
