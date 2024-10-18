@@ -17,14 +17,13 @@ class P3POWrapper(dm_env.Environment):
 
         self.observation_spec = self._env.observation_spec
         obs = self.reset().observation
-        for key in training_keys:
-            self._obs_spec[key] = specs.BoundedArray(
-                shape=obs[key].shape,
-                dtype=np.float32,
-                minimum=-np.inf,
-                maximum=np.inf,
-                name=key,
-            )
+        self._obs_spec["graph"] = specs.BoundedArray(
+            shape=obs["graph"].shape,
+            dtype=np.float32,
+            minimum=-np.inf,
+            maximum=np.inf,
+            name="graph",
+        )
 
     def reset(self, **kwargs):
         observation = self._env.reset(**kwargs)
@@ -43,7 +42,7 @@ class P3POWrapper(dm_env.Environment):
         else:
             self.points_class.get_depth()
 
-        obs[self.training_keys[0]] = self.points_class.get_points()[-1]
+        obs['graph'] = self.points_class.get_points()[-1]
         obs = self._env._replace(observation, observation=obs)
 
         return obs
@@ -62,7 +61,7 @@ class P3POWrapper(dm_env.Environment):
         else:
             self.points_class.get_depth()
 
-        obs[self.training_keys[0]] = self.points_class.get_points()[-1]
+        obs['graph'] = self.points_class.get_points()[-1]
         obs = self._env._replace(observation, observation=obs)
 
         return obs
