@@ -20,7 +20,7 @@ from video import VideoRecorder
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 torch.backends.cudnn.benchmark = True
-
+import wandb
 
 def make_agent(obs_spec, action_spec, cfg):
     obs_shape = {}
@@ -38,10 +38,18 @@ def make_agent(obs_spec, action_spec, cfg):
 
 class WorkspaceIL:
     def __init__(self, cfg):
+         
         self.work_dir = Path.cwd()
         print(f"workspace: {self.work_dir}")
 
         self.cfg = cfg
+        wandb.init(
+            project=self.cfg.project_name,  # Add the project name to your config
+            config=dict(self.cfg),
+            dir=str(self.work_dir),
+            name=self.cfg.run_name,  # Add a unique run name
+        )
+
         utils.set_seed_everywhere(cfg.seed)
         self.device = torch.device(cfg.device)
 
@@ -202,6 +210,15 @@ class WorkspaceIL:
             log("episode_length", step * self.cfg.suite.action_repeat / episode)
             log("episode", self.global_episode)
             log("step", self.global_step)
+        
+        wandb.log({
+                "eval/episode_reward": np.mean(episode_rewards[:num_envs]),
+                "eval/success": np.mean(successes),
+                "eval/episode_length": step * self.cfg.suite.action_repeat / episode,
+                "eval/episode": self.global_episode,
+                "eval/step": self.global_step,
+            })
+
 
         self.agent.train(True)
 
@@ -236,12 +253,20 @@ class WorkspaceIL:
                     log("total_time", total_time)
                     log("actor_loss", metrics["actor_loss"])
                     log("step", self.global_step)
+                
+                # Log metrics to WandB
+                wandb.log({
+                    "train/actor_loss": metrics["actor_loss"],
+                    "train/total_time": self.timer.total_time(),
+                    "train/step": self.global_step,
+                })
 
             # save snapshot
             if save_every_step(self.global_step):
                 self.save_snapshot()
 
             self._global_step += 1
+        wandb.finish()
 
     def save_snapshot(self):
         snapshot_dir = self.work_dir / "snapshot"

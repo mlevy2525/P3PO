@@ -130,6 +130,7 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         observation["features"] = obs["features"]
         observation["task_emb"] = self.task_emb
         observation["goal_achieved"] = False
+        observation["fingertips"] = obs["fingertips"]
         return observation
 
     def step(self, action):
@@ -143,6 +144,7 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         observation["features"] = obs["features"]
         observation["task_emb"] = self.task_emb
         observation["goal_achieved"] = done
+        observation["fingertips"] = obs["fingertips"]
         return observation, reward, done, info
 
     def observation_spec(self):
@@ -232,6 +234,7 @@ class FrameStackWrapper(dm_env.Environment):
         obs["proprioceptive"] = time_step.observation["proprioceptive"]
         obs["task_emb"] = time_step.observation["task_emb"]
         obs["goal_achieved"] = time_step.observation["goal_achieved"]
+        obs["fingertips"] = time_step.observation["fingertips"]
         return time_step._replace(observation=obs)
 
     def _extract_pixels(self, time_step):
@@ -394,9 +397,16 @@ def make(
     pixel_keys,
     eval,  # True means use_robot=True
 ):
-    env = gym.make(
-        "Dexterous-v1",
-        actor_name='hand',
+    # env = gym.make(
+    #     "Dexterous-v1",
+    #     actor_name='hand_and_arm',
+    #     use_robot=eval,
+    # )
+    import sys
+    sys.path.append('/home/ademi/P3PO/dexterous')
+    from dexterous.envs.dexterous_real_arm_env import DexterousRealArmEnv
+    env = DexterousRealArmEnv(
+        actor_name="hand_and_arm",
         use_robot=eval,
     )
 

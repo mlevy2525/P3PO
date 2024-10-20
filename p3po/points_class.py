@@ -12,7 +12,7 @@ from utilities.correspondence import Correspondence
 from utilities.depth import Depth
 
 class PointsClass():
-    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_points, dimensions, **kwargs):
+    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_tracked_points, num_fingertip_points, num_points, dimensions, **kwargs):
         """
         Initialize the Points Class for finding key points in the episode.
 
@@ -94,6 +94,8 @@ class PointsClass():
 
         self.device = device
         self.dimensions = dimensions
+        self.num_tracked_points = num_tracked_points
+        self.num_fingertip_points = num_fingertip_points
 
     # Image passed in here must be in RGB format
     def add_to_image_list(self, image):

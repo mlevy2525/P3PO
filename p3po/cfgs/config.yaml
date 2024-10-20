@@ -5,8 +5,12 @@ defaults:
   - dataloader: libero
   - override hydra/launcher: submitit_local
 
+# wandb
+project_name: 'p3po'
+run_name: '2dobject'
+
 # Root Dir
-root_dir: /path/to/root/directory
+root_dir: /home/ademi/P3PO
 use_p3po: True
 
 # misc

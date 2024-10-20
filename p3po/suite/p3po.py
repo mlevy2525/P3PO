@@ -1,6 +1,7 @@
 import numpy as np
 import dm_env
 from dm_env import specs
+import torch
 
 import sys
 sys.path.append("../data_generation/")
@@ -43,6 +44,7 @@ class P3POWrapper(dm_env.Environment):
             self.points_class.get_depth()
 
         obs['graph'] = self.points_class.get_points()[-1]
+        obs['graph'][self.points_class.num_tracked_points * self.points_class.dimensions:] = torch.tensor(obs['fingertips'])
         obs = self._env._replace(observation, observation=obs)
 
         return obs
@@ -62,6 +64,7 @@ class P3POWrapper(dm_env.Environment):
             self.points_class.get_depth()
 
         obs['graph'] = self.points_class.get_points()[-1]
+        obs['graph'][self.points_class.num_tracked_points * self.points_class.dimensions:] = torch.tensor(obs['fingertips'])
         obs = self._env._replace(observation, observation=obs)
 
         return obs

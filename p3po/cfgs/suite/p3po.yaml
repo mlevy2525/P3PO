@@ -2,18 +2,20 @@ defaults:
   - _self_
   - task: p3po
 
-root_dir: /path/to/root/directory
+root_dir: /home/ademi/P3PO
 
-task_name: ""
+task_name: "1014_pushdonut"
 device: "cuda"
 
 width: -1
 height: -1
-image_size_multiplier: 2
+image_size_multiplier: 0.5
 
 ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
+num_tracked_points: 1
+num_fingertip_points: 4
 num_points: 5
-dimensions: 3
+dimensions: 2

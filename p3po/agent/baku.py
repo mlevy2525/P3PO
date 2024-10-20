@@ -554,7 +554,7 @@ class BCAgent:
             else:
                 to_append = obs[key]
                 
-            self.observation_buffer[key].append(to_append)
+            self.observation_buffer[key].append(to_append.numpy())
             to_input = torch.as_tensor(
                 np.array(self.observation_buffer[key]), device=self.device
             ).float()

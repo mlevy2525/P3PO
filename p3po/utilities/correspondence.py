@@ -58,8 +58,8 @@ class Correspondence():
             self.original_size = expert_image.size
 
             if self.width == -1 or self.height == -1:
-                self.width = expert_image.size[0] * self.image_size_multiplier
-                self.height = expert_image.size[1] * self.image_size_multiplier
+                self.width = int(expert_image.size[0] * self.image_size_multiplier)
+                self.height = int(expert_image.size[1] * self.image_size_multiplier)
 
             expert_image = expert_image.resize((self.width, self.height), resample=PIL.Image.BILINEAR)
             expert_image = (transforms.PILToTensor()(expert_image) / 255.0 - 0.5) * 2
