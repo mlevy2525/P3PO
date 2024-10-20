@@ -9,11 +9,12 @@ import imageio
 import torch
 
 from points_class import PointsClass
+from pathlib import Path
 
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
 read_from_pickle = True
-pickle_path = "/fs/cfar-projects/waypoint_rl/BAKU_final/P3PO/expert_demos/metaworld/basketball.pkl"
+pickle_path = "/path/to/pickle.pkl"
 pickle_image_key = "pixels"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
@@ -29,7 +30,8 @@ video_paths = []
 # TODO: Set to true if you want to save a video of the points being tracked
 write_videos = True
 
-# TODO:  If you want to subsample the frames, set the subsample rate here.
+# TODO:  If you want to subsample the frames, set the subsample rate here. Note you will have to update your dataset to 
+# reflect the subsampling rate, we do not do this for you.
 subsample = 1
 
 with open("../cfgs/suite/p3po.yaml") as stream:
@@ -43,6 +45,9 @@ if read_from_pickle:
     num_demos = len(examples['observations'])
 else:
     num_demos = len(video_paths)
+
+if write_videos:
+    Path(f"{cfg['root_dir']}/p3po/data_generation/videos").mkdir(parents=True, exist_ok=True)
 
 # Initialize the PointsClass object
 points_class = PointsClass(**cfg)
@@ -130,4 +135,5 @@ final_graph['pickle_path'] = pickle_path
 final_graph['video_paths'] = video_paths
 final_graph['cfg'] = cfg
 
+Path(f"{cfg['root_dir']}/processed_data/points").mkdir(parents=True, exist_ok=True)
 pickle.dump(final_graph, open(f"{cfg['root_dir']}/processed_data/points/{cfg['task_name']}.pkl", "wb"))

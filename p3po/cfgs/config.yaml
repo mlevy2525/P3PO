@@ -6,7 +6,7 @@ defaults:
   - override hydra/launcher: submitit_local
 
 # Root Dir
-root_dir: /fs/cfar-projects/waypoint_rl/BAKU_final/P3PO
+root_dir: /path/to/root/directory
 use_p3po: True
 
 # misc

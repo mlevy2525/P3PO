@@ -54,8 +54,23 @@ class PointsClass():
 
         # Set up the correspondence model and find the expert image features
         self.correspondence_model = Correspondence(device, root_dir + "/dift/", width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps)
-        self.initial_coords = np.array(pickle.load(open("%s/coordinates/coords/%s.pkl" % (root_dir, task_name), "rb")))
-        expert_image = Image.open("%s/coordinates/images/%s.png" % (root_dir, task_name)).convert('RGB')
+        try:
+            self.initial_coords = np.array(pickle.load(open("%s/coordinates/coords/%s.pkl" % (root_dir, task_name), "rb")))
+        except Exception as e:
+            print(e)
+            print("Setting coordinates to random values")
+            if num_points == -1:
+                num_points = 100
+            self.initial_coords = np.random.rand(num_points, 3) * 256
+            self.initial_coords[:, 0] = 0
+
+        try:
+            expert_image = Image.open("%s/coordinates/images/%s.png" % (root_dir, task_name)).convert('RGB')
+        except Exception as e:
+            print(e)
+            print("Setting expert image to random values")
+            expert_image = Image.fromarray((np.random.rand(256, 256, 3) * 255).astype(np.uint8))
+
         self.expert_correspondence_features = self.correspondence_model.set_expert_correspondence(expert_image)
 
         # Set up the depth model

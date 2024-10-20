@@ -21,6 +21,7 @@ img_size = 512
 action_repeat = 2
 
 SAVE_DATA_PATH = Path('../../expert_demos/metaworld')
+SAVE_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 from mw_info import env_names, POLICY, CAMERA, NUM_STEPS
 

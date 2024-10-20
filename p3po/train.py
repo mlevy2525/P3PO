@@ -87,8 +87,20 @@ class WorkspaceIL:
 
 
         # create agent
+        if self.cfg.dataloader.bc_dataset._target_ == "read_data.p3po_general.BCDataset":
+            from dm_env import specs
+            action_spec = specs.BoundedArray(
+                            (self.expert_replay_loader.dataset._max_action_dim,),
+                            np.float32,
+                            self.stats["actions"]["min"],
+                            self.stats["actions"]["max"],
+                            "action",
+                        )
+        else:
+            action_spec = self.env[0].action_spec()
+
         self.agent = make_agent(
-            self.env[0].observation_spec(), self.env[0].action_spec(), cfg
+            self.env[0].observation_spec(), action_spec, cfg
         )
 
         self.envs_till_idx = self.expert_replay_loader.dataset.envs_till_idx

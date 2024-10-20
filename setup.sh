@@ -22,5 +22,9 @@ pip install -e .
 cd ../
 
 cd dift
+pip install xformers
 git checkout main
 cd ../
+
+pip install torchvision
+pip install huggingface-hub==0.23.2

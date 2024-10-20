@@ -66,6 +66,7 @@ class BCDataset(IterableDataset):
         # read data
         self._episodes = {}
         self._max_episode_len = 0
+        self._max_action_dim = 0
         self._max_state_dim = 0
         self._num_samples = 0
         for (_graph_idx, _path_idx) in zip(self._graph_paths, self._paths):
@@ -87,6 +88,9 @@ class BCDataset(IterableDataset):
             )
             actions = data["actions"]
 
+            min_act = None
+            max_act = None
+
             if "task_emb" in data:
                 task_emb = data["task_emb"]
             else:
@@ -98,6 +102,14 @@ class BCDataset(IterableDataset):
                 if isinstance(actions[i], list):
                     actions[i] = np.array(actions[i])
                     actions[i] = actions[i].reshape(actions[i].shape[0], -1)
+                self._max_action_dim = max(self._max_action_dim, actions[i].shape[-1])
+                # max, min action
+                if min_act is None:
+                    min_act = np.min(actions[i], axis=0)
+                    max_act = np.max(actions[i], axis=0)
+                else:
+                    min_act = np.minimum(min_act, np.min(actions[i], axis=0))
+                    max_act = np.maximum(max_act, np.max(actions[i], axis=0))
 
                 episode = dict(
                     observation=observations[i],
@@ -124,8 +136,8 @@ class BCDataset(IterableDataset):
 
         self.stats = {
             "actions": {
-                "min": 0,
-                "max": 1,
+                "min": min_act,
+                "max": max_act,
             },
             "proprioceptive": {
                 "min": 0,

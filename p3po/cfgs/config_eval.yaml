@@ -6,7 +6,8 @@ defaults:
   - override hydra/launcher: submitit_local
 
 # Root Dir
-root_dir: /path/to/repo/BAKU
+root_dir: /path/to/root/directory
+use_p3po: True
 
 # misc
 seed: 2
@@ -17,13 +18,15 @@ use_tb: true
 batch_size: 64
 
 # experiment
-obs_type: "pixels" # pixels, features
+obs_type: "features" # pixels, features
+training_keys: ['graph']
+depth_keys: ['depth']
 num_demos_per_task: 50
 encoder_type: 'resnet' # base, resnet
 policy_type: 'gpt' # mlp, gpt
 policy_head: deterministic # deterministic, gmm, bet, diffusion, vqbet
-use_proprio: true
-use_language: true
+use_proprio: false
+use_language: false
 use_actions: false
 eval: true
 prompt: text # text, goal, intermediate_goal
