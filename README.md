@@ -62,11 +62,11 @@ data = {
 - If you find that the tracking is not as good as you would like you can label some additional points on each object as shown below (#TODO: ADD IMAGE HERE). This will likely improve cotrackers accuracy. Make sure to label these points AFTER you have selected all of the prescriptive points and also you will need to set the number of prescriptive points in the next step.
 
 ## Labeling the data
-- Now that you have selected your points you can generate your dataset using the generate_points.py script.
-
-- Open the generate_points.py script and finish the 3 TODOs labeled there
-
+- Now that you have selected your points you can generate your dataset.
+  
 - Set your path and task name in the config file located at `P3PO/p3po/cfgs/suite/p3po.yaml`. If you labeled additional points in the prior step you will need to set num_points here. If not you can leave this set to -1.
+  
+- Open the generate_points.py script and finish the 3 TODOs labeled there
 
 ```
 python generate_points.py
