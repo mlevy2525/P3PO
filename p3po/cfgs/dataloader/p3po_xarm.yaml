@@ -14,7 +14,7 @@ bc_dataset:
   action_after_steps: ${suite.action_after_steps}
   intermediate_goal_step: 30
   store_actions: true
-  pixel_keys: ${suite.pixel_keys}
+  training_keys: ${training_keys}
   subsample: 5
   skip_first_n: 0
   relative_actions: true
