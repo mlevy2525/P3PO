@@ -33,13 +33,14 @@ data = {
         {
             "pixels": np.ndarray,  # A NumPy array representing the pixel data for each step in the episode.
             "features": np.ndarray    # A NumPy array representing the feature data for each step in the episode.
+            "depth": np.ndarray    # A NumPy array representing the depth data for each step in the episode.
         },
         ...
     ]
 }
 ```
 
-- You do not need to include specifically "pixels" and "features" as keys if the observation dictionary, but please include necessary observations here.
+- You do not need to include specifically "pixels","features" and "depth" as keys if the observation dictionary, but please include necessary observations here.
 
 - Save this data to a pickle file to be used in future steps.
 
