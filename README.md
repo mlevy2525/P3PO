@@ -1,5 +1,7 @@
 # P3-PO: Prescriptive Point Priors for Visuo-Spatial Generalization of Robot Policies
 
+- This work is forked from https://github.com/siddhanthaldar/BAKU/tree/main. Please refer to the BAKU paper for more information on training etc.
+
 ## Installation
 The first thing you'll need to do is clone the environment. Once this is done you will set up the conda environment and download the submodules.
 
