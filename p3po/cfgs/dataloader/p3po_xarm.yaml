@@ -1,7 +1,7 @@
 bc_dataset:
   _target_: read_data.p3po_xarm_env.BCDataset
   path: ${root_dir}/expert_demos/xarm_env
- processed_path: '${root_dir}/processed_data'
+  processed_path: '${root_dir}/processed_data'
   tasks: ${suite.task.tasks}
   num_demos_per_task: ${num_demos_per_task}
   obs_type: ${obs_type}
