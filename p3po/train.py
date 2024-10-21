@@ -43,12 +43,16 @@ class WorkspaceIL:
         print(f"workspace: {self.work_dir}")
 
         self.cfg = cfg
-        wandb.init(
-            project=self.cfg.project_name,  # Add the project name to your config
-            config=dict(self.cfg),
-            dir=str(self.work_dir),
-            name=self.cfg.run_name,  # Add a unique run name
-        )
+        if self.cfg.eval_only:
+            self.cfg.eval = True
+
+        if self.cfg.use_wandb:
+            wandb.init(
+                project=self.cfg.project_name,  # Add the project name to your config
+                config=dict(self.cfg),
+                dir=str(self.work_dir),
+                name=self.cfg.run_name,  # Add a unique run name
+            )
 
         utils.set_seed_everywhere(cfg.seed)
         self.device = torch.device(cfg.device)
@@ -67,6 +71,8 @@ class WorkspaceIL:
         self.cfg.suite.task_make_fn.max_episode_len = (
             self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
         )
+        if self.cfg.eval:
+            self.cfg.suite.task_make_fn.max_episode_len = (10000)
         self.cfg.suite.task_make_fn.max_state_dim = (
             self.expert_replay_loader.dataset._max_state_dim
         )
@@ -88,6 +94,7 @@ class WorkspaceIL:
                     print(exc)
 
             points_cfg["root_dir"] = self.cfg.root_dir
+            points_cfg["dimensions"] = self.cfg.point_dimensions
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):
@@ -211,13 +218,14 @@ class WorkspaceIL:
             log("episode", self.global_episode)
             log("step", self.global_step)
         
-        wandb.log({
-                "eval/episode_reward": np.mean(episode_rewards[:num_envs]),
-                "eval/success": np.mean(successes),
-                "eval/episode_length": step * self.cfg.suite.action_repeat / episode,
-                "eval/episode": self.global_episode,
-                "eval/step": self.global_step,
-            })
+        if self.cfg.use_wandb:
+            wandb.log({
+                    "eval/episode_reward": np.mean(episode_rewards[:num_envs]),
+                    "eval/success": np.mean(successes),
+                    "eval/episode_length": step * self.cfg.suite.action_repeat / episode,
+                    "eval/episode": self.global_episode,
+                    "eval/step": self.global_step,
+                })
 
 
         self.agent.train(True)
@@ -243,30 +251,33 @@ class WorkspaceIL:
                 self.eval()
 
             # update
-            metrics = self.agent.update(self.expert_replay_iter, self.global_step)
-            self.logger.log_metrics(metrics, self.global_frame, ty="train")
+            if not self.cfg.eval_only:
+                metrics = self.agent.update(self.expert_replay_iter, self.global_step)
+                self.logger.log_metrics(metrics, self.global_frame, ty="train")
 
-            # log
-            if log_every_step(self.global_step):
-                elapsed_time, total_time = self.timer.reset()
-                with self.logger.log_and_dump_ctx(self.global_frame, ty="train") as log:
-                    log("total_time", total_time)
-                    log("actor_loss", metrics["actor_loss"])
-                    log("step", self.global_step)
-                
-                # Log metrics to WandB
-                wandb.log({
-                    "train/actor_loss": metrics["actor_loss"],
-                    "train/total_time": self.timer.total_time(),
-                    "train/step": self.global_step,
-                })
+                # log
+                if log_every_step(self.global_step):
+                    elapsed_time, total_time = self.timer.reset()
+                    with self.logger.log_and_dump_ctx(self.global_frame, ty="train") as log:
+                        log("total_time", total_time)
+                        log("actor_loss", metrics["actor_loss"])
+                        log("step", self.global_step)
+                    
+                    # Log metrics to WandB
+                    if self.cfg.use_wandb:
+                        wandb.log({
+                            "train/actor_loss": metrics["actor_loss"],
+                            "train/total_time": self.timer.total_time(),
+                            "train/step": self.global_step,
+                        })
 
-            # save snapshot
-            if save_every_step(self.global_step):
-                self.save_snapshot()
+                # save snapshot
+                if save_every_step(self.global_step):
+                    self.save_snapshot()
 
             self._global_step += 1
-        wandb.finish()
+        if self.cfg.use_wandb:
+            wandb.finish()
 
     def save_snapshot(self):
         snapshot_dir = self.work_dir / "snapshot"

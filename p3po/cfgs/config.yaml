@@ -7,7 +7,7 @@ defaults:
 
 # wandb
 project_name: 'p3po'
-run_name: '2dobject'
+run_name: 'run'
 
 # Root Dir
 root_dir: /home/ademi/P3PO
@@ -34,6 +34,7 @@ use_language: false
 use_actions: false
 prompt: text # text, goal, intermediate_goal
 eval: false
+eval_only: true
 experiment: train
 experiment_label: ${policy_head}
 
@@ -48,9 +49,12 @@ expert_dataset: ${dataloader.bc_dataset}
 load_bc: false
 bc_weight: null
 
+use_wandb: false
+point_dimensions: 3
+
 hydra:
   run:
-    dir: ./exp_local/${now:%Y.%m.%d}_${experiment}/${experiment_label}/${now:%H%M%S}_hidden_dim_${suite.hidden_dim}
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${run_name}
   sweep:
     dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}
     subdir: ${hydra.job.num}

@@ -213,7 +213,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         print(f'Arm Pose from H_E_I: {arm_pose_from_ik}')
         print(f'Arm Pose from H_E_F: {arm_pose}')
         action = np.concatenate([arm_pose, target_joint_positions[self.num_arm_joints:]], axis=0)
-        input("Press Enter to take an action...")
+        # input("Press Enter to take an action...")
         obs = self.step_control(action)
         return obs, 0, 0, {}
 
