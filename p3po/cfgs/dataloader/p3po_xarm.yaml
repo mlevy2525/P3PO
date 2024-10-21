@@ -1,5 +1,5 @@
 bc_dataset:
-  _target_: read_data.p3po_xarm_env.BCDataset
+  _target_: read_data.p3po_xarm.BCDataset
   path: ${root_dir}/expert_demos/xarm_env
   processed_path: '${root_dir}/processed_data'
   tasks: ${suite.task.tasks}
