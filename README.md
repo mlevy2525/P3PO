@@ -57,9 +57,13 @@ data = {
 
 - Once you have set these you can run the all the cells and label points at the bottom. You can do this by clicking on the image. Once you are done please select the Save Images button.
 
-- We have included an image (#TODO: ADD IMAGE HERE) to show you an example of what labeled points may look like. 
+- We have included an image to show you an example of what labeled points may look like. 
+
+![An image marked with keypoints](figs/prescriptive_points.png)
 
 - If you find that the tracking is not as good as you would like you can label some additional points on each object as shown below (#TODO: ADD IMAGE HERE). This will likely improve cotrackers accuracy. Make sure to label these points AFTER you have selected all of the prescriptive points and also you will need to set the number of prescriptive points in the next step.
+
+![An image marked with keypoints](figs/prescriptive_points_extra.png)
 
 ## Labeling the data
 - Now that you have selected your points you can generate your dataset.
