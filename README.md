@@ -49,7 +49,7 @@ data = {
 
 - Open the label_points notebook. In the first cell you will need to set several variables.
 
-- The first is the path to the image/video you want to label points on. If you want to label an image make sure you set use_video to False.
+- The first is the path to the image/video you want to label points on. If you want to label an image make sure you set use_video to False. You can also label from a pickle file of the correct format.
 
 - Next you'll need to name your task, remember this name as you'll need to use it later to point the final code towards your labeled points.
 
