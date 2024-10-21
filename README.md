@@ -61,7 +61,7 @@ data = {
 
 ![An image marked with keypoints](figs/prescriptive_points.png)
 
-- If you find that the tracking is not as good as you would like you can label some additional points on each object as shown below (#TODO: ADD IMAGE HERE). This will likely improve cotrackers accuracy. Make sure to label these points AFTER you have selected all of the prescriptive points and also you will need to set the number of prescriptive points in the next step.
+- If you find that the tracking is not as good as you would like you can label some additional points on each object as shown below. This will likely improve cotrackers accuracy. Make sure to label these points AFTER you have selected all of the prescriptive points and also you will need to set the number of prescriptive points in the next step.
 
 ![An image marked with keypoints](figs/prescriptive_points_extra.png)
 
