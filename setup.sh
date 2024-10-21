@@ -26,5 +26,9 @@ pip install xformers
 git checkout main
 cd ../
 
+cd xarm_env
+pip install -e .
+cd ../
+
 pip install torchvision
 pip install huggingface-hub==0.23.2
