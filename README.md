@@ -77,7 +77,7 @@ python generate_points.py
 
 - The following script can be used to train the metaworld assembly task. You can train a different task by replacing assembly here.
 ```
-python train.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.hidden_dim=256 use_proprio=false suite.task.scenes=[assembly] eval=true save_train_video=true
+python train.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.hidden_dim=256 use_proprio=false suite.task.scenes=[TASK_NAME_HERE] eval=true save_train_video=true
 ```
 
 - You can train an xarm environment using the following script. Make sure the task name is aligned with the name of the dataset.
@@ -96,7 +96,7 @@ python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.ta
 - You can evaluate metaworld tasks with the following command. Change the scene accordingly.
 
 ```
-python eval.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.task.scenes=[assembly] use_proprio=false  suite.hidden_dim=256 bc_weight=/path/to/model
+python eval.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.task.scenes=[TASK_NAME_HERE] use_proprio=false  suite.hidden_dim=256 bc_weight=/path/to/model
 ```
 
 - Follow the same patten to evaluate other environments.
