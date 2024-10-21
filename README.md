@@ -3,8 +3,6 @@
 - This work is forked from https://github.com/siddhanthaldar/BAKU/tree/main. Please refer to the BAKU paper for more information on training etc.
 
 ## Installation
-The first thing you'll need to do is clone the environment. Once this is done you will set up the conda environment and download the submodules.
-
 - Clone the repository and create a conda environment using the provided `conda_env.yml` file.
 ```
 conda env create -f conda_env.yml
