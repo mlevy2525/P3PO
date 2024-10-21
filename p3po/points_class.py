@@ -99,7 +99,11 @@ class PointsClass():
             The image to add to the image list. This image must be in RGB format.
         """
 
-        pil_image = Image.fromarray((image))
+        try:
+            pil_image = Image.fromarray((image))
+        except Exception as TypeError:
+            pil_image = Image.fromarray((np.random.rand(256, 256, 3) * 255).astype(np.uint8))
+            
         transformed = (self.transform(pil_image) / 255)
 
         # We only want to track the last 16 images so pop the first one off if we have more than 16
