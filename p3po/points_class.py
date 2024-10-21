@@ -11,6 +11,15 @@ import matplotlib.patches as patches
 from utilities.correspondence import Correspondence
 from utilities.depth import Depth
 
+sys.path.append("/home/ademi/hermes")
+from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS
+
+intrinsics = CAM_TO_INTRINSICS['realsense-023422073116']
+F_X = intrinsics.F_X
+F_Y = intrinsics.F_Y
+C_X = intrinsics.C_X
+C_Y = intrinsics.C_Y
+
 class PointsClass():
     def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_tracked_points, num_fingertip_points, num_points, dimensions, **kwargs):
         """
@@ -222,10 +231,10 @@ class PointsClass():
                     except:
                         depth = 0
 
-                    x = (self.tracks[0, frame_idx, point][0] - width/2) * depth
-                    y = (self.tracks[0, frame_idx, point][1] - height/2) * depth
-                    x /= (width/2)
-                    y /= (height/2)
+                    x = (self.tracks[0, frame_idx, point][0] - C_X) * depth
+                    y = (self.tracks[0, frame_idx, point][1] - C_Y) * depth
+                    x /= F_X
+                    y /= F_Y
 
                     final_points[frame_num, point] = torch.tensor([x, y, depth])
                 else:

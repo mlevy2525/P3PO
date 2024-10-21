@@ -9,7 +9,7 @@ device: "cuda"
 
 width: -1
 height: -1
-image_size_multiplier: 0.5
+image_size_multiplier: 1
 
 ensemble_size: 8
 dift_layer: 1
@@ -18,4 +18,4 @@ dift_steps: 50
 num_tracked_points: 1
 num_fingertip_points: 4
 num_points: 5
-dimensions: 2
+dimensions: 3
