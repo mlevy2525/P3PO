@@ -86,12 +86,12 @@ python train.py agent=baku suite=metaworld dataloader=p3po_metaworld suite.hidde
 
 - You can train an xarm environment using the following script. Make sure the task name is aligned with the name of the dataset.
 ```
-python train.py agent=baku suite=xarm_env dataloader=p3po_xarm suite.task.tasks[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
+python train.py agent=baku suite=xarm_env dataloader=p3po_xarm suite.task.tasks=[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
 ```
 
 - If you are not using one of our suites you can train a general dataset using.  Make sure the task name is aligned with the name of the dataset.
 ```
-python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.tasks[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
+python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.tasks=[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
 ```
 
 ## Evaluating P3PO
