@@ -16,7 +16,7 @@ hidden_dim: 256
 num_train_steps: 601000
 log_every_steps: 1000
 save_every_steps: 50000
-history: false
+history: true
 history_len: 10
 
 # eval
