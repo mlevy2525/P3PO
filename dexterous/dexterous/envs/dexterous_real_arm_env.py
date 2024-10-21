@@ -22,7 +22,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
     CAM_HOST = "172.24.71.240"
     CAM_PORT = 10005
     CAM_ID = 3
-    CAM_TYPE = "realsense"
+    CAM_TYPE = "realsense-023422073116"
     CAM_INTRINSICS = CAM_TO_INTRINSICS[CAM_TYPE]
     MARKER_SIZE = MARKER_LENGTH
 
@@ -104,9 +104,6 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
                 port=DexterousRealArmEnv.CAM_PORT + DexterousRealArmEnv.CAM_ID,
                 topic_type="RGB",
             )
-        self.image_transform = T.Compose([
-            T.Resize((DexterousRealArmEnv.CAM_INTRINSICS.H, DexterousRealArmEnv.CAM_INTRINSICS.W)),
-        ])
 
         print("resetting to home position")
         self.reset()
@@ -153,7 +150,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
                 image, _ = self.image_subscriber.recv_rgb_image()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                 image = Image.fromarray(image, "RGB")
-                return np.asarray(self.image_transform(image))
+                return np.asarray(image)
             else:
                 return 255 * np.ones((512, 512, 3), np.uint8)
 

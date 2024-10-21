@@ -2,7 +2,8 @@ import numpy as np
 import dm_env
 from dm_env import specs
 import torch
-
+import cv2
+import os
 import sys
 sys.path.append("../data_generation/")
 from points_class import PointsClass
@@ -25,6 +26,7 @@ class P3POWrapper(dm_env.Environment):
             maximum=np.inf,
             name="graph",
         )
+        os.makedirs("/home/ademi/plotted_images", exist_ok=True)
 
     def reset(self, **kwargs):
         observation = self._env.reset(**kwargs)
@@ -75,8 +77,13 @@ class P3POWrapper(dm_env.Environment):
             obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
         else:
             obs['graph'][points_dimensions:points_dimensions+fingertips_dimensions] = torch.tensor(obs['fingertips'])
-        obs = self._env._replace(observation, observation=obs)
+        index_pose = np.eye(4)
+        index_pose[:3, 3] = obs['fingertips'][0:3]
+        img = self.points_class.plot_image(index_pose=index_pose)[-1]
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(f"/home/ademi/plotted_images/image_{self._env._step}.png", img)
 
+        obs = self._env._replace(observation, observation=obs)
         return obs
 
     def observation_spec(self):

@@ -13,7 +13,7 @@ from utilities.depth import Depth
 
 sys.path.append("/home/ademi/hermes")
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS
-
+from hermes.pose_estimation_ar.preprocess_aruco import draw_point
 intrinsics = CAM_TO_INTRINSICS['realsense-023422073116']
 F_X = intrinsics.F_X
 F_Y = intrinsics.F_Y
@@ -105,6 +105,7 @@ class PointsClass():
         self.dimensions = dimensions
         self.num_tracked_points = num_tracked_points
         self.num_fingertip_points = num_fingertip_points
+        self.tracked = False
 
     # Image passed in here must be in RGB format
     def add_to_image_list(self, image):
@@ -189,13 +190,14 @@ class PointsClass():
             Whether or not this is the first step in the episode.
         """
 
-        if is_first_step:
+        if is_first_step and not self.tracked:
             self.cotracker(video_chunk=self.image_list[0, 0].unsqueeze(0).unsqueeze(0), 
                            is_first_step=True, 
                            add_support_grid=True, 
                            queries=self.semantic_similar_points[None].to(self.device))
             self.tracks = self.semantic_similar_points
-        else:
+        elif self.tracked==False:
+            self.tracked = True
             tracks, _ = self.cotracker(self.image_list, one_frame=one_frame)
             # Remove the support points
             tracks = tracks[:, :, 0:self.num_points, :]
@@ -244,7 +246,7 @@ class PointsClass():
 
         return final_points.reshape(last_n_frames, -1)
 
-    def plot_image(self, last_n_frames=1):
+    def plot_image(self, last_n_frames=1, index_pose=None):
         """
         Plot the image with the key points overlaid on top of it. Running this will slow down your tracking, but it's good for debugging.
 
@@ -264,6 +266,9 @@ class PointsClass():
         for frame_num in range(last_n_frames):
             frame_idx = -1 * (last_n_frames - frame_num)
             curr_image = self.image_list[0, frame_idx].cpu().numpy().transpose(1, 2, 0) * 255
+            if index_pose is not None:
+                curr_image = draw_point(curr_image, pose=index_pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=(0, 255, 0))
+
 
             fig, ax = plt.subplots(1)
             ax.imshow(curr_image.astype(np.uint8))
@@ -272,7 +277,7 @@ class PointsClass():
             # Generate n evenly spaced colors from the colormap
             colors = [rainbow(i / self.tracks.shape[2]) for i in range(self.tracks.shape[2])]
 
-            for idx, coord in enumerate(self.tracks[0, frame_idx]):
+            for idx, coord in enumerate(self.tracks[0, frame_idx][:self.num_tracked_points]):
                 ax.add_patch(patches.Circle((coord[0].cpu(), coord[1].cpu()), 5, facecolor=colors[idx], edgecolor="black"))
             fig.canvas.draw()
             img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
