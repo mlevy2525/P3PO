@@ -70,7 +70,6 @@ data = {
 
 ```
 python generate_points.py
-
 ```
 
 ## Training P3PO
