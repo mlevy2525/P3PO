@@ -1,7 +1,16 @@
 import pickle
 import numpy as np
+import yaml
 
-pickle_path = "/home/ademi/hermes/data/push_donut_franka_20241014_preprocessed/closed_loop_dataset_objectpixelkeypoints.pkl"
+with open("cfgs/suite/p3po.yaml") as stream:
+    try:
+        cfg = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+task_name = cfg['task_name']
+dimensions = cfg['dimensions']
+pickle_path = f"/home/ademi/hermes/data/push_donut_franka_20241014_preprocessed/{task_name}_closed_loop_dataset_{dimensions}d.pkl"
 
 to_return = {}
 with open(pickle_path, "rb") as f:
@@ -19,5 +28,5 @@ with open(pickle_path, "rb") as f:
     to_return['actions'] = actions
     to_return['observations'] = all_graphs
 
-pickle.dump(to_return, open("/home/ademi/P3PO/expert_demos/general/closed_loop_dataset_objectpixelkeypoints.pkl", "wb"))
-pickle.dump(to_return, open("/home/ademi/P3PO/processed_data/points/closed_loop_dataset_objectpixelkeypoints.pkl", "wb"))
+pickle.dump(to_return, open(f"/home/ademi/P3PO/expert_demos/general/{task_name}_closed_loop_dataset_{dimensions}d.pkl", "wb"))
+pickle.dump(to_return, open(f"/home/ademi/P3PO/processed_data/points/{task_name}_closed_loop_dataset_{dimensions}d.pkl", "wb"))

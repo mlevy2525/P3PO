@@ -14,7 +14,7 @@ from utilities.depth import Depth
 sys.path.append("/home/ademi/hermes")
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS
 from hermes.pose_estimation_ar.preprocess_aruco import draw_point
-intrinsics = CAM_TO_INTRINSICS['realsense-023422073116']
+intrinsics = CAM_TO_INTRINSICS['realsense-239122072252']
 F_X = intrinsics.F_X
 F_Y = intrinsics.F_Y
 C_X = intrinsics.C_X
@@ -105,7 +105,7 @@ class PointsClass():
         self.dimensions = dimensions
         self.num_tracked_points = num_tracked_points
         self.num_fingertip_points = num_fingertip_points
-        self.tracked = False
+        # self.tracked = False
 
     # Image passed in here must be in RGB format
     def add_to_image_list(self, image):
@@ -180,6 +180,30 @@ class PointsClass():
                 self.depth = depth[None, ...].copy()
             self.depth = np.concatenate((self.depth, depth[None, ...].copy()), axis=0)
 
+    # def track_points(self, is_first_step=False, one_frame=True):
+    #     """
+    #     Track the key points in the current image using the CoTracker model.
+
+    #     Parameters:
+    #     -----------
+    #     is_first_step : bool
+    #         Whether or not this is the first step in the episode.
+    #     """
+
+    #     if is_first_step and not self.tracked:
+    #         self.cotracker(video_chunk=self.image_list[0, 0].unsqueeze(0).unsqueeze(0), 
+    #                        is_first_step=True, 
+    #                        add_support_grid=True, 
+    #                        queries=self.semantic_similar_points[None].to(self.device))
+    #         self.tracks = self.semantic_similar_points
+    #     elif self.tracked==False:
+    #         self.tracked = True
+    #         tracks, _ = self.cotracker(self.image_list, one_frame=one_frame)
+    #         # Remove the support points
+    #         tracks = tracks[:, :, 0:self.num_points, :]
+
+    #         self.tracks = tracks
+
     def track_points(self, is_first_step=False, one_frame=True):
         """
         Track the key points in the current image using the CoTracker model.
@@ -190,14 +214,13 @@ class PointsClass():
             Whether or not this is the first step in the episode.
         """
 
-        if is_first_step and not self.tracked:
+        if is_first_step:
             self.cotracker(video_chunk=self.image_list[0, 0].unsqueeze(0).unsqueeze(0), 
                            is_first_step=True, 
                            add_support_grid=True, 
                            queries=self.semantic_similar_points[None].to(self.device))
             self.tracks = self.semantic_similar_points
-        elif self.tracked==False:
-            self.tracked = True
+        else:
             tracks, _ = self.cotracker(self.image_list, one_frame=one_frame)
             # Remove the support points
             tracks = tracks[:, :, 0:self.num_points, :]

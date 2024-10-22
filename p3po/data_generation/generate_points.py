@@ -1,139 +1,124 @@
-import sys
-sys.path.append("../")
-
+import os
+os.environ['MUJOCO_GL'] = 'egl'
 import pickle
-import cv2
-import yaml
-import imageio
-
-import torch
-
-from points_class import PointsClass
 from pathlib import Path
+import sys
+sys.path.append('../')
+from points_class import PointsClass
+import yaml
+import numpy as np
+import cv2
+import imageio
+import h5py
 
-# TODO: Set if you want to read from a pickle or from mp4 files
-# If you are reading from a pickle please make sure that the images are RGB not BGR
-read_from_pickle = True
-pickle_path = "/path/to/pickle.pkl"
-pickle_image_key = "pixels"
-
-# TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
-# To use gt depth, the depth must be in the same pickle as the images
-# We assume the input depth is in the form width x height
-use_gt_depth = True
-gt_depth_key = "depth"
-
-# Otherwise we need to add videos to a list
-# TODO: A list of videos to read from if you are not loading data from a pickle
-video_paths = []
-
-# TODO: Set to true if you want to save a video of the points being tracked
-write_videos = True
-
-# TODO:  If you want to subsample the frames, set the subsample rate here. Note you will have to update your dataset to 
-# reflect the subsampling rate, we do not do this for you.
-subsample = 1
+save_images = True
+gt_depth = True
+orig_bgr = False
+ 
+preprocessed_data_dir = '/home/ademi/hermes/data/push_donut_franka_20241014_preprocessed'
 
 with open("../cfgs/suite/p3po.yaml") as stream:
     try:
         cfg = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
-
-if read_from_pickle:
-    examples = pickle.load(open(pickle_path, "rb"))
-    num_demos = len(examples['observations'])
-else:
-    num_demos = len(video_paths)
-
-if write_videos:
-    Path(f"{cfg['root_dir']}/p3po/data_generation/videos").mkdir(parents=True, exist_ok=True)
-
-# Initialize the PointsClass object
 points_class = PointsClass(**cfg)
-episode_list = []
+task_name = cfg['task_name']
 
-mark_every = 8
-for i in range(num_demos):
-    # Read the frames from the pickle or video, these frames must be in RGB so if reading from a pickle make sure to convert if necessary
-    if read_from_pickle:
-        frames = examples['observations'][i][pickle_image_key][0::subsample]
-        if use_gt_depth:
-            depth = examples['observations'][i][gt_depth_key][0::subsample]
-    else:
-        frames = []
-        video = cv2.VideoCapture(video_paths[i])
-        subsample_counter = 0
-        while video.isOpened():
-            ret, frame = video.read()
+graphs_list = []
+trajectories = {}
+for directory in os.listdir(preprocessed_data_dir):
+    if 'demonstration' not in directory:
+        continue
+    path = f'{preprocessed_data_dir}/{directory}/cam_3_rgb_video.mp4'
+    depth_path = f'{preprocessed_data_dir}/{directory}/cam_3_depth.h5'
+    print(f"Processing {path}")
+    cap = cv2.VideoCapture(path)
+    images = []
+    depth_images = []
+    frame_skip = 1
+    counter = 0
+    depth_counter = 0
+    with h5py.File(depth_path, 'r') as h5_file:
+        depth_dataset = h5_file['depth_images']
+        while(cap.isOpened()):
+            ret, frame = cap.read()
             if not ret:
                 break
-            if subsample_counter % subsample == 0:
-                # CV2 reads in BGR format, so we need to convert to RGB
-                frames.append(frame[:, :, ::-1])
-            subsample_counter += 1
-        video.release()
+            if counter % frame_skip == 0:
+                images.append(frame.copy())
+                if counter < len(depth_dataset):
+                    depth_image = depth_dataset[counter]
+                    depth_images.append(depth_image)
+                    depth_counter = counter
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            counter += 1
 
-    points_class.add_to_image_list(frames[0])
+    print(f"Read {counter} rgb frames and {depth_counter} depth frames so cutting rgb frames to {depth_counter} frames")
+    images = images[:depth_counter]
+
+    graphs = []
+
+    points_class.reset_episode()
+
+    if orig_bgr:
+        points_class.add_to_image_list(images[0][:,:,::-1])
+    else:
+        points_class.add_to_image_list(images[0])
+
     points_class.find_semantic_similar_points()
     points_class.track_points(is_first_step=True)
-    points_class.track_points(one_frame=(mark_every == 1))
+    points_class.track_points()
 
-    if use_gt_depth:
-        points_class.set_depth(depth[0])
+    if gt_depth:
+        depth_image = depth_images[0] / 1000
+        points_class.set_depth(depth_image)
     else:
         points_class.get_depth()
 
-    points_list = []
-    points = points_class.get_points()
-    points_list.append(points[0])
+    graph = points_class.get_points()
 
-    if write_videos:
-        video_list = []
-        image = points_class.plot_image()
-        video_list.append(image[0])
+    graphs.append(graph)
 
-    for idx,image in enumerate(frames[1:]):
-        points_class.add_to_image_list(image)
-        if use_gt_depth:
-            points_class.set_depth(depth[idx + 1])
+    if os.path.exists(f'{directory}'):
+        import shutil
+        shutil.rmtree(f'{directory}')
+    os.makedirs(f'{directory}')
 
-        if (idx + 1) % mark_every == 0 or idx == (len(frames) - 2):
-            to_add = mark_every - (idx + 1) % mark_every
-            if to_add < mark_every:
-                for j in range(to_add):
-                    points_class.add_to_image_list(image)
-            else:
-                to_add = 0
+    if save_images:
+        image = points_class.plot_image()[-1]
+        cv2.imwrite(f'{directory}/{task_name}_0.png', image)
 
-            points_class.track_points(one_frame=(mark_every == 1))
-            if not use_gt_depth:
-                points_class.get_depth(last_n_frames=mark_every)
+    for idx, image in enumerate(images[1:]):
+        if orig_bgr:
+            points_class.add_to_image_list(image[:,:,::-1])
+        else:
+            points_class.add_to_image_list(image)
+        points_class.track_points()
+        if gt_depth:
+            depth_image = depth_images[idx] / 1000
+            points_class.set_depth(depth_image)
+        else:
+            points_class.get_depth()
+        
+        graph = points_class.get_points()
+            
+        graphs.append(graph)
+        if save_images:
+            image = points_class.plot_image()[-1]
+            cv2.imwrite(f'{directory}/{task_name}_{idx+1}.png', image)
 
-            points = points_class.get_points(last_n_frames=mark_every)
-            for j in range(mark_every - to_add):
-                points_list.append(points[j])
+    with imageio.get_writer(f'{directory}_{task_name}.gif', mode='I', duration=0.3) as writer:  
+        for filetask_name in os.listdir(f'{directory}'):
+            if filetask_name.endswith(".png"):
+                image = imageio.imread(f'{directory}/{filetask_name}')
+                writer.append_data(image)
 
-            if write_videos:
-                images = points_class.plot_image(last_n_frames=mark_every)
-                for j in range(mark_every - to_add):
-                    video_list.append(images[j])
+    trajectories[directory.split('_')[-1]] = graphs
 
-    if write_videos:
-        imageio.mimsave(f"videos/{cfg['task_name']}_%d.mp4" % i, video_list, fps=30)
-    
-    episode_list.append(torch.stack(points_list))
-    points_class.reset_episode()
-
-final_graph = {}
-final_graph['episode_list'] = episode_list
-final_graph['subsample'] = subsample
-final_graph['pixel_key'] = pickle_image_key
-final_graph['use_gt_depth'] = use_gt_depth
-final_graph['gt_depth_key'] = gt_depth_key
-final_graph['pickle_path'] = pickle_path
-final_graph['video_paths'] = video_paths
-final_graph['cfg'] = cfg
-
-Path(f"{cfg['root_dir']}/processed_data/points").mkdir(parents=True, exist_ok=True)
-pickle.dump(final_graph, open(f"{cfg['root_dir']}/processed_data/points/{cfg['task_name']}.pkl", "wb"))
+dimensions = cfg['dimensions']
+file_path = f'{preprocessed_data_dir}/{task_name}_{dimensions}d.pkl'
+with open(str(file_path), 'wb') as f:
+    pickle.dump(trajectories, f)
+print(f"Saved points to {file_path}")

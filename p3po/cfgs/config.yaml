@@ -34,7 +34,7 @@ use_language: false
 use_actions: false
 prompt: text # text, goal, intermediate_goal
 eval: false
-eval_only: true
+eval_only: false
 experiment: train
 experiment_label: ${policy_head}
 

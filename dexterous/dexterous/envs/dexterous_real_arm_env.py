@@ -22,7 +22,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
     CAM_HOST = "172.24.71.240"
     CAM_PORT = 10005
     CAM_ID = 3
-    CAM_TYPE = "realsense-023422073116"
+    CAM_TYPE = "realsense-239122072252"
     CAM_INTRINSICS = CAM_TO_INTRINSICS[CAM_TYPE]
     MARKER_SIZE = MARKER_LENGTH
 
