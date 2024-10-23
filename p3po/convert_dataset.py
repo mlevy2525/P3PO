@@ -10,7 +10,7 @@ with open("cfgs/suite/p3po.yaml") as stream:
 
 task_name = cfg['task_name']
 dimensions = cfg['dimensions']
-pickle_path = f"/home/ademi/hermes/data/push_donut_franka_20241014_preprocessed/{task_name}_closed_loop_dataset_{dimensions}d.pkl"
+pickle_path = f"/home/ademi/hermes/data/open_oven_20241022_preprocessed/{task_name}_{dimensions}d_closed_loop_dataset.pkl"
 
 to_return = {}
 with open(pickle_path, "rb") as f:
@@ -28,5 +28,5 @@ with open(pickle_path, "rb") as f:
     to_return['actions'] = actions
     to_return['observations'] = all_graphs
 
-pickle.dump(to_return, open(f"/home/ademi/P3PO/expert_demos/general/{task_name}_closed_loop_dataset_{dimensions}d.pkl", "wb"))
-pickle.dump(to_return, open(f"/home/ademi/P3PO/processed_data/points/{task_name}_closed_loop_dataset_{dimensions}d.pkl", "wb"))
+pickle.dump(to_return, open(f"/home/ademi/P3PO/expert_demos/general/{task_name}_{dimensions}d_closed_loop_dataset.pkl", "wb"))
+pickle.dump(to_return, open(f"/home/ademi/P3PO/processed_data/points/{task_name}_{dimensions}d_closed_loop_dataset.pkl", "wb"))

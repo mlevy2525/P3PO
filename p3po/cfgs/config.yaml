@@ -7,7 +7,7 @@ defaults:
 
 # wandb
 project_name: 'p3po'
-run_name: 'run'
+run_name: 'open_oven_1022'
 
 # Root Dir
 root_dir: /home/ademi/P3PO
@@ -54,7 +54,7 @@ point_dimensions: 3
 
 hydra:
   run:
-    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${run_name}
+    dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${run_name}_${point_dimensions}d
   sweep:
     dir: ./exp_local/${now:%Y.%m.%d}/${now:%H%M%S}
     subdir: ${hydra.job.num}

@@ -4,7 +4,7 @@ defaults:
 
 root_dir: /home/ademi/P3PO
 
-task_name: "donutv3"
+task_name: "open_oven_1022"
 device: "cuda"
 
 width: -1
@@ -15,7 +15,6 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 5
 
-num_tracked_points: 1
+num_tracked_points: 10
 num_fingertip_points: 4
-num_points: 5
 dimensions: 3

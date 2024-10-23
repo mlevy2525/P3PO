@@ -15,7 +15,7 @@ save_images = True
 gt_depth = True
 orig_bgr = False
  
-preprocessed_data_dir = '/home/ademi/hermes/data/push_donut_franka_20241014_preprocessed'
+preprocessed_data_dir = '/home/ademi/hermes/data/open_oven_20241022_preprocessed'
 
 with open("../cfgs/suite/p3po.yaml") as stream:
     try:
@@ -24,6 +24,16 @@ with open("../cfgs/suite/p3po.yaml") as stream:
         print(exc)
 points_class = PointsClass(**cfg)
 task_name = cfg['task_name']
+dimensions = cfg['dimensions']
+
+if os.path.exists(f'{task_name}_{dimensions}d_frames'):
+    import shutil
+    shutil.rmtree(f'{task_name}_{dimensions}d_frames')
+os.makedirs(f'{task_name}_{dimensions}d_frames', exist_ok=True)
+if os.path.exists(f'{task_name}_{dimensions}d_gifs'):
+    import shutil
+    shutil.rmtree(f'{task_name}_{dimensions}d_gifs')
+os.makedirs(f'{task_name}_{dimensions}d_gifs', exist_ok=True)
 
 graphs_list = []
 trajectories = {}
@@ -81,14 +91,14 @@ for directory in os.listdir(preprocessed_data_dir):
 
     graphs.append(graph)
 
-    if os.path.exists(f'{directory}'):
+    if os.path.exists(f'{task_name}_{dimensions}d_frames/{directory}'):
         import shutil
-        shutil.rmtree(f'{directory}')
-    os.makedirs(f'{directory}')
-
+        shutil.rmtree(f'{task_name}_{dimensions}d_frames/{directory}')
+    os.makedirs(f'{task_name}_{dimensions}d_frames/{directory}')
+    
     if save_images:
         image = points_class.plot_image()[-1]
-        cv2.imwrite(f'{directory}/{task_name}_0.png', image)
+        cv2.imwrite(f'{task_name}_{dimensions}d_frames/{directory}/{task_name}_0.png', image)
 
     for idx, image in enumerate(images[1:]):
         if orig_bgr:
@@ -107,17 +117,16 @@ for directory in os.listdir(preprocessed_data_dir):
         graphs.append(graph)
         if save_images:
             image = points_class.plot_image()[-1]
-            cv2.imwrite(f'{directory}/{task_name}_{idx+1}.png', image)
+            cv2.imwrite(f'{task_name}_{dimensions}d_frames/{directory}/{task_name}_{idx+1}.png', image)
 
-    with imageio.get_writer(f'{directory}_{task_name}.gif', mode='I', duration=0.3) as writer:  
-        for filetask_name in os.listdir(f'{directory}'):
+    with imageio.get_writer(f'{task_name}_{dimensions}d_gifs/{directory}_{task_name}.gif', mode='I', duration=0.3) as writer:  
+        for filetask_name in os.listdir(f'{task_name}_{dimensions}d_frames/{directory}'):
             if filetask_name.endswith(".png"):
-                image = imageio.imread(f'{directory}/{filetask_name}')
+                image = imageio.imread(f'{task_name}_{dimensions}d_frames/{directory}/{filetask_name}')
                 writer.append_data(image)
 
     trajectories[directory.split('_')[-1]] = graphs
 
-dimensions = cfg['dimensions']
 file_path = f'{preprocessed_data_dir}/{task_name}_{dimensions}d.pkl'
 with open(str(file_path), 'wb') as f:
     pickle.dump(trajectories, f)

@@ -46,6 +46,7 @@ class WorkspaceIL:
         if self.cfg.eval_only:
             self.cfg.eval = True
 
+        self.cfg.run_name = self.cfg.run_name + '_' + str(self.cfg.point_dimensions) + 'd'
         if self.cfg.use_wandb:
             wandb.init(
                 project=self.cfg.project_name,  # Add the project name to your config
