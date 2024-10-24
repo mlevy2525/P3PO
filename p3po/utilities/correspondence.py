@@ -3,6 +3,7 @@ import torch
 from torchvision import transforms
 import numpy as np
 import PIL
+import gc
 
 class Correspondence():
 
@@ -110,6 +111,14 @@ class Correspondence():
 
                 max_yx = np.unravel_index(cos_map[0].argmax(), cos_map[0].shape)
                 out_coords[idx,1], out_coords[idx,2] = int(max_yx[1] * curr_image_shape[0]/self.width), int(max_yx[0] * curr_image_shape[1]/self.height)
+
+                del trg_ft
+                del trg_vec
+                del src_vec
+                del cos_map
+                gc.collect()
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
 
             # out_coords[:,1], out_coords[idx,2] = int(out_coords[:,1] * curr_image_shape[1]/self.original_size[0]), int(out_coords[:,2] * curr_image_shape[1]/self.original_size[0])
             return out_coords

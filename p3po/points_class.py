@@ -136,6 +136,7 @@ class PointsClass():
 
         self.image_list = torch.tensor([]).to(self.device)
         self.depth = torch.tensor([]).to(self.device)
+        self.semantic_similar_points = None
 
     def find_semantic_similar_points(self):
         """

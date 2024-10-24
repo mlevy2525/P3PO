@@ -166,6 +166,7 @@ class WorkspaceIL:
             success = []
 
             while eval_until_episode(episode):
+                torch.cuda.empty_cache()
                 time_step = self.env[env_idx].reset()
                 self.agent.buffer_reset()
                 step = 0
