@@ -10,6 +10,7 @@ import numpy as np
 import cv2
 import imageio
 import h5py
+import pickle as pkl
 
 save_images = True
 gt_depth = True
@@ -22,8 +23,12 @@ with open("../cfgs/suite/p3po.yaml") as stream:
         cfg = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
-points_class = PointsClass(**cfg)
+
 task_name = cfg['task_name']
+coords = pkl.load(open(f'../../coordinates/coords/{task_name}.pkl', 'rb'))
+cfg['num_tracked_points'] = len(coords)
+print(f"Number of tracked points: {cfg['num_tracked_points']}")
+points_class = PointsClass(**cfg)
 dimensions = cfg['dimensions']
 
 if os.path.exists(f'{task_name}_{dimensions}d_frames'):
