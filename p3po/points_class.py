@@ -123,12 +123,12 @@ class PointsClass():
         self.image_list = torch.tensor([]).to(self.device)
         self.depth = torch.tensor([]).to(self.device)
 
-    def find_semantic_similar_points(self):
+    def find_semantic_similar_points(self, object_bbox=None):
         """
         Find the semantic similar points between the expert image and the current image.
         """
 
-        self.semantic_similar_points = self.correspondence_model.find_correspondence(self.expert_correspondence_features, self.image_list[0, -1], self.initial_coords)
+        self.semantic_similar_points = self.correspondence_model.find_correspondence(self.expert_correspondence_features, self.image_list[0, -1], self.initial_coords, object_bbox)
 
     def get_depth(self, last_n_frames=1):
         """

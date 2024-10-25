@@ -33,8 +33,11 @@ class P3POWrapper(dm_env.Environment):
         if obs[self.pixel_keys[0]].shape[0] == 3:
             obs[self.pixel_keys[0]] = np.transpose(obs[self.pixel_keys[0]], (1, 2, 0))
 
+        # TODO: get object_bbox from reasoning server
+        object_bbox = None
+
         self.points_class.add_to_image_list(obs[self.pixel_keys[0]])
-        self.points_class.find_semantic_similar_points()
+        self.points_class.find_semantic_similar_points(object_bbox)
         self.points_class.track_points(is_first_step=True)
         self.points_class.track_points()
         if len(self.depth_keys) > 0 and self.depth_keys[0] in obs:

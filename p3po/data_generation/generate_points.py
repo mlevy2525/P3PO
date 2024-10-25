@@ -13,19 +13,19 @@ from pathlib import Path
 
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
-read_from_pickle = True
+read_from_pickle = False
 pickle_path = "/path/to/pickle.pkl"
 pickle_image_key = "pixels"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
 # To use gt depth, the depth must be in the same pickle as the images
 # We assume the input depth is in the form width x height
-use_gt_depth = True
+use_gt_depth = False
 gt_depth_key = "depth"
 
 # Otherwise we need to add videos to a list
 # TODO: A list of videos to read from if you are not loading data from a pickle
-video_paths = []
+video_paths = ["/mnt/robotlab/siddhant/tactile_openteach/Open-Teach/data/processed_data/0722_pick_two_from_fridge2/demonstration_1/videos/camera1.mp4"]
 
 # TODO: Set to true if you want to save a video of the points being tracked
 write_videos = True

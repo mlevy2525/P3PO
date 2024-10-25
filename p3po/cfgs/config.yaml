@@ -6,7 +6,7 @@ defaults:
   - override hydra/launcher: submitit_local
 
 # Root Dir
-root_dir: /path/to/root/directory
+root_dir: /mnt/robotlab/siddhant/P3PO
 use_p3po: True
 
 # misc

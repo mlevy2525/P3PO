@@ -2,9 +2,9 @@ defaults:
   - _self_
   - task: p3po
 
-root_dir: /path/to/root/directory
+root_dir: /mnt/robotlab/siddhant/P3PO
 
-task_name: ""
+task_name: "test"
 device: "cuda"
 
 width: -1
@@ -15,4 +15,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: -1
+num_points: 5
