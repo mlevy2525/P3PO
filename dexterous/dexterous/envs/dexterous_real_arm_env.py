@@ -81,7 +81,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
             marker_id=0
         )
         self.H_B_C = base_calibr.calibrate(save_transform=True, save_img=True)
-        base_calibr.get_calibration_error_in_2d(base_to_camera=self.H_B_C)
+        # base_calibr.get_calibration_error_in_2d(base_to_camera=self.H_B_C)
 
         self.num_dofs = self.num_arm_joints + self.num_hand_joints
 
@@ -188,6 +188,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
             H_F_C = np.eye(4)
             H_F_C[:3, 3] = target_fingertip_in_camera
             H_F_B = np.linalg.pinv(self.H_B_C) @ H_F_C
+            H_F_B[:3,3] += [0.025, 0.025, 0.02]
             H_F_Bs.append(H_F_B)
         H_F_Bs = np.stack(H_F_Bs, axis=0)   
 
@@ -207,8 +208,8 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         arm_pose = np.concatenate(
             [H_E_F[:3, 3], Rotation.from_matrix(H_E_F[:3,:3]).as_quat()], axis=0
         )
-        print(f'Arm Pose from H_E_I: {arm_pose_from_ik}')
-        print(f'Arm Pose from H_E_F: {arm_pose}')
+        # print(f'Arm Pose from H_E_I: {arm_pose_from_ik}')
+        # print(f'Arm Pose from H_E_F: {arm_pose}')
         action = np.concatenate([arm_pose, target_joint_positions[self.num_arm_joints:]], axis=0)
         # input("Press Enter to take an action...")
         obs = self.step_control(action)
