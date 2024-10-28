@@ -7,6 +7,7 @@ import os
 import sys
 sys.path.append("../data_generation/")
 from points_class import PointsClass
+import pickle as pkl
 
 class P3POWrapper(dm_env.Environment):
     def __init__(self, env, pixel_keys, depth_keys, training_keys, points_class):
@@ -16,6 +17,9 @@ class P3POWrapper(dm_env.Environment):
         self.training_keys = training_keys
         self.depth_keys = depth_keys
         self.points_class = points_class
+        self.nearest_neighbor_state = False
+        if self.nearest_neighbor_state:
+            self.closed_loop_dataset = pkl.load(open("/home/ademi/P3PO/expert_demos/general/open_oven_1025_densehandle_3d_abs_actions_closed_loop_dataset.pkl", "rb"))
 
         self.observation_spec = self._env.observation_spec
         obs = self.reset().observation
@@ -26,6 +30,9 @@ class P3POWrapper(dm_env.Environment):
             maximum=np.inf,
             name="graph",
         )
+        if os.path.exists("/home/ademi/plotted_images"):
+            import shutil
+            shutil.rmtree("/home/ademi/plotted_images")
         os.makedirs("/home/ademi/plotted_images", exist_ok=True)
 
     def reset(self, **kwargs):
@@ -47,11 +54,23 @@ class P3POWrapper(dm_env.Environment):
 
         obs['graph'] = self.points_class.get_points()[-1]
         points_dimensions = self.points_class.num_tracked_points * self.points_class.dimensions
-        fingertips_dimensions = obs['fingertips'].shape[0]
-        if points_dimensions + fingertips_dimensions > obs['graph'].shape[0]:
-            obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
-        else:
-            obs['graph'][points_dimensions:points_dimensions+fingertips_dimensions] = torch.tensor(obs['fingertips'])
+        obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
+        
+        if self.nearest_neighbor_state:
+            min_distance = float('inf')
+            min_idx = 0
+            min_episode_idx = 0
+            for episode_idx, episode in enumerate(self.closed_loop_dataset['observations']):
+                graph = torch.tensor(episode['graph'])
+                curr_graph = obs['graph'].unsqueeze(0)
+                min_idx = torch.abs(curr_graph - graph).sum(-1).argmin()
+                distance = torch.abs(curr_graph - graph).sum(-1)[min_idx]
+                if distance < min_distance:
+                    min_distance = distance
+                    min_idx = min_idx
+                    min_episode_idx = episode_idx
+            obs['graph'] = torch.tensor(self.closed_loop_dataset['observations'][min_episode_idx]['graph'][min_idx])
+
         obs = self._env._replace(observation, observation=obs)
 
         return obs
@@ -73,6 +92,22 @@ class P3POWrapper(dm_env.Environment):
         obs['graph'] = self.points_class.get_points()[-1]
         points_dimensions = self.points_class.num_tracked_points * self.points_class.dimensions
         obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
+
+        if self.nearest_neighbor_state:
+            min_distance = float('inf')
+            min_idx = 0
+            min_episode_idx = 0
+            for episode_idx, episode in enumerate(self.closed_loop_dataset['observations']):
+                graph = torch.tensor(episode['graph'])
+                curr_graph = obs['graph'].unsqueeze(0)
+                min_idx = torch.abs(curr_graph - graph).sum(-1).argmin()
+                distance = torch.abs(curr_graph - graph).sum(-1)[min_idx]
+                if distance < min_distance:
+                    min_distance = distance
+                    min_idx = min_idx
+                    min_episode_idx = episode_idx
+            obs['graph'] = torch.tensor(self.closed_loop_dataset['observations'][min_episode_idx]['graph'][min_idx])
+
         index_pose = np.eye(4)
         index_pose[:3, 3] = obs['fingertips'][0:3]
         img = self.points_class.plot_image(index_pose=index_pose)[-1]

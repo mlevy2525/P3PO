@@ -21,6 +21,7 @@ from video import VideoRecorder
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 torch.backends.cudnn.benchmark = True
 import wandb
+import pickle as pkl
 
 def make_agent(obs_spec, action_spec, cfg):
     obs_shape = {}
@@ -158,6 +159,10 @@ class WorkspaceIL:
         successes = []
 
         num_envs = self.envs_till_idx
+        self.vinn = False
+        self.open_loop = False
+        if self.vinn or self.open_loop:
+            self.closed_loop_dataset = pkl.load(open("/home/ademi/P3PO/expert_demos/general/open_oven_1025_densehandle_3d_abs_actions_closed_loop_dataset.pkl", "rb"))
 
         for env_idx in range(num_envs):
             print(f"evaluating env {env_idx}")
@@ -179,6 +184,9 @@ class WorkspaceIL:
 
                 if episode == 0:
                     self.video_recorder.init(self.env[env_idx], enabled=True)
+                
+                if self.open_loop:
+                    ol_step = 0
 
                 # plot obs with cv2
                 while not time_step.last():
@@ -186,15 +194,40 @@ class WorkspaceIL:
                         prompt = self.expert_replay_loader.dataset.sample_test(
                             env_idx, step
                         )
-                    with torch.no_grad(), utils.eval_mode(self.agent):
-                        action = self.agent.act(
-                            time_step.observation,
-                            prompt,
-                            self.stats,
-                            step,
-                            self.global_step,
-                            eval_mode=True,
-                        )
+                    if self.vinn:
+                        curr_graph = time_step.observation["graph"].unsqueeze(0)
+                        min_distance = float('inf')
+                        min_idx = 0
+                        min_episode_idx = 0
+                        for episode_idx, episode in enumerate(self.closed_loop_dataset['observations']):
+                            if episode_idx != 38:
+                                continue
+                            graph = torch.tensor(episode['graph'])
+                            min_idx = torch.abs(curr_graph - graph).sum(-1).argmin()
+                            distance = torch.abs(curr_graph - graph).sum(-1)[min_idx]
+                            if distance < min_distance:
+                                min_distance = distance
+                                min_idx = min_idx
+                                min_episode_idx = episode_idx
+                        print('closest episode:', min_episode_idx)
+                        action = self.closed_loop_dataset['actions'][min_episode_idx][min_idx].flatten()
+                        print('action:', action)
+                    elif self.open_loop:
+                        action = self.closed_loop_dataset['actions'][0][ol_step].flatten()
+                        ol_step += 1
+                    else:
+                        with torch.no_grad(), utils.eval_mode(self.agent):
+                            action = self.agent.act(
+                                time_step.observation,
+                                prompt,
+                                self.stats,
+                                step,
+                                self.global_step,
+                                eval_mode=True,
+                            )
+                    if self.open_loop: 
+                        ol_step += 1
+                    # breakpoint()
                     time_step = self.env[env_idx].step(action)
                     self.video_recorder.record(self.env[env_idx])
                     total_reward += time_step.reward

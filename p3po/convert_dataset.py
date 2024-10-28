@@ -10,7 +10,12 @@ with open("cfgs/suite/p3po.yaml") as stream:
 
 task_name = cfg['task_name']
 dimensions = cfg['dimensions']
-pickle_path = f"/home/ademi/hermes/data/open_oven_20241022_preprocessed/{task_name}_{dimensions}d_closed_loop_dataset.pkl"
+delta_actions = False
+if delta_actions:
+    closed_loop_dataset_name = f'{task_name}_{dimensions}d_delta_actions_closed_loop_dataset.pkl'
+else:
+    closed_loop_dataset_name = f'{task_name}_{dimensions}d_abs_actions_closed_loop_dataset.pkl'
+pickle_path = f"/home/ademi/hermes/data/open_oven_20241022_preprocessed/{closed_loop_dataset_name}"
 
 to_return = {}
 with open(pickle_path, "rb") as f:
@@ -28,5 +33,6 @@ with open(pickle_path, "rb") as f:
     to_return['actions'] = actions
     to_return['observations'] = all_graphs
 
-pickle.dump(to_return, open(f"/home/ademi/P3PO/expert_demos/general/{task_name}_{dimensions}d_closed_loop_dataset.pkl", "wb"))
-pickle.dump(to_return, open(f"/home/ademi/P3PO/processed_data/points/{task_name}_{dimensions}d_closed_loop_dataset.pkl", "wb"))
+pickle.dump(to_return, open(f"/home/ademi/P3PO/expert_demos/general/{closed_loop_dataset_name}", "wb"))
+pickle.dump(to_return, open(f"/home/ademi/P3PO/processed_data/points/{closed_loop_dataset_name}", "wb"))
+print(f"Dumped closed loop dataset for {closed_loop_dataset_name} to expert_demos and processed_data folders")
