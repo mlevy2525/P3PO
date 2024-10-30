@@ -94,6 +94,8 @@ python train.py agent=baku suite=xarm_env dataloader=p3po_xarm suite.task.tasks=
 python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.tasks=[TASK_NAME_HERE] suite.hidden_dim=256 use_proprio=false
 ```
 
+- If you would like to use depth anything instead of ground truth depth here set depth_keys in the config to an empty list.
+
 ## Evaluating P3PO
 - Before you evaluate set your root directory in the config_eval.yaml.
 
