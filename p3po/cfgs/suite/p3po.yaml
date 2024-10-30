@@ -4,7 +4,7 @@ defaults:
 
 root_dir: /mnt/robotlab/siddhant/P3PO
 
-task_name: "test"
+task_name: "pick_plate_from_rack"
 device: "cuda"
 
 width: -1
@@ -15,4 +15,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: 5
+num_points: 24

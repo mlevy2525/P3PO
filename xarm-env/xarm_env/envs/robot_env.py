@@ -61,15 +61,15 @@ class RobotEnv(gym.Env):
                     )
                 )
 
-            for fish_eye_cam_idx in list(FISH_EYE_CAM_SERIAL_NUMS.keys()):
-                port = FISH_EYE_CAMERA_PORT_OFFSET + fish_eye_cam_idx
-                self.image_subscribers.append(
-                    ZMQCameraSubscriber(
-                        host=HOST_ADDRESS,
-                        port=port,
-                        topic_type="RGB",
-                    )
-                )
+            # for fish_eye_cam_idx in list(FISH_EYE_CAM_SERIAL_NUMS.keys()):
+            #     port = FISH_EYE_CAMERA_PORT_OFFSET + fish_eye_cam_idx
+            #     self.image_subscribers.append(
+            #         ZMQCameraSubscriber(
+            #             host=HOST_ADDRESS,
+            #             port=port,
+            #             topic_type="RGB",
+            #         )
+            #     )
 
             # action request port
             self.action_request_socket = create_request_socket(
@@ -95,9 +95,9 @@ class RobotEnv(gym.Env):
         if ret == "Command failed!":
             print("Command failed!")
             self.action_request_socket.send(b"get_state")
-            robot_state = pickle.loads(self.action_request_socket.recv())["xarm"]
+            robot_state = pickle.loads(self.action_request_socket.recv())["robot_state"]["xarm"]
         else:
-            robot_state = ret["xarm"]
+            robot_state = ret["robot_state"]["xarm"]
 
         cartesian = robot_state[:6]
         quat_cartesian = get_quaternion_orientation(cartesian)
@@ -120,18 +120,28 @@ class RobotEnv(gym.Env):
             print("resetting")
             self.action_request_socket.send(b"reset")
             reset_state = pickle.loads(self.action_request_socket.recv())
+            print("reset done")
 
             # subscribe robot state
+            print("subscribing robot state")
             self.action_request_socket.send(b"get_state")
-            robot_state = pickle.loads(self.action_request_socket.recv())["xarm"]
+            print("subscribed robot state")
+            robot_state = pickle.loads(self.action_request_socket.recv())["robot_state"]["xarm"]
+            print("robot state: ", robot_state)
+            
             cartesian = robot_state[:6]
             quat_cartesian = get_quaternion_orientation(cartesian)
             robot_state = np.concatenate([quat_cartesian, robot_state[6:]], axis=0)
+            print("robot state after conversion: ", robot_state)
 
             # subscribe images
             image_list = []
             for subscriber in self.image_subscribers:
+                print("subscribing image")
                 image_list.append(subscriber.recv_rgb_image()[0])
+                print("image received")
+
+            print("reset done")
 
             obs = {}
             obs["features"] = robot_state

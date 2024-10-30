@@ -258,6 +258,10 @@ class PointsClass():
             img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             img_list.append(img.copy())
+            # save the image
+            image_folder = "/mnt/robotlab/siddhant/P3PO/saved_images"
+            import time
+            plt.imsave(f"{image_folder}/image_{time.time()}_{frame_num}.png", img)
             plt.close()
 
         return img_list

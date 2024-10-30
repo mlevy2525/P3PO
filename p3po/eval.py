@@ -54,9 +54,13 @@ class WorkspaceIL:
         # create logger
         self.logger = Logger(self.work_dir, use_tb=self.cfg.use_tb)
         # create envs
-        self.cfg.suite.task_make_fn.max_episode_len = (
-            self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
-        )
+        self.cfg.suite.task_make_fn.max_episode_len = 1000
+        # self.cfg.suite.task_make_fn.max_episode_len = (
+        #     self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
+        # )
+        # print(self.cfg.suite.action_repeat)
+        # print(self.expert_replay_loader.dataset._max_episode_len)
+        # print(f"max_episode_len: {self.cfg.suite.task_make_fn.max_episode_len}")
         self.cfg.suite.task_make_fn.max_state_dim = (
             self.expert_replay_loader.dataset._max_state_dim
         )
@@ -75,6 +79,7 @@ class WorkspaceIL:
                     points_cfg = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
                     print(exc)
+
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):
