@@ -73,7 +73,7 @@ class PointsClass():
         # Set up cotracker
         sys.path.append(root_dir + "/co-tracker/")
         from cotracker.predictor import CoTrackerOnlinePredictor
-        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/scaled_online.pth", window_len=self.window_len).to(device)
+        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/scaled_online.pth", window_len=16).to(device)
 
 
         self.transform = transforms.Compose([ 
