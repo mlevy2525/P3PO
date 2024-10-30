@@ -99,7 +99,7 @@ class PointsClass():
             The image to add to the image list. This image must be in RGB format.
         """
 
-        transformed = torch.from_numpy(image).permute(2, 0, 1).float() / 255
+        transformed = torch.from_numpy(image.astype(np.uint8)).permute(2, 0, 1).float() / 255
 
         # We only want to track the last 16 images so pop the first one off if we have more than 16
         if self.image_list.shape[0] > 0 and self.image_list.shape[1] == 16:
