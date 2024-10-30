@@ -14,7 +14,7 @@ pip install -e .
 pip install matplotlib flow_vis tqdm tensorboard imageio[ffmpeg]
 mkdir -p checkpoints
 cd checkpoints
-wget https://huggingface.co/facebook/cotracker/resolve/main/cotracker2v1.pth
+wget https://huggingface.co/facebook/cotracker3/resolve/main/scaled_online.pth
 cd ../../
 
 cd Metaworld
