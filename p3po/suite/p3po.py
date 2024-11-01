@@ -110,7 +110,14 @@ class P3POWrapper(dm_env.Environment):
 
         index_pose = np.eye(4)
         index_pose[:3, 3] = obs['fingertips'][0:3]
-        img = self.points_class.plot_image(index_pose=index_pose)[-1]
+        middle_pose = np.eye(4)
+        middle_pose[:3, 3] = obs['fingertips'][3:6]
+        ring_pose = np.eye(4)
+        ring_pose[:3, 3] = obs['fingertips'][6:9]
+        thumb_pose = np.eye(4)
+        thumb_pose[:3, 3] = obs['fingertips'][9:12]
+        finger_poses = [index_pose, middle_pose, ring_pose, thumb_pose]
+        img = self.points_class.plot_image(finger_poses=finger_poses)[-1]
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         cv2.imwrite(f"/home/ademi/plotted_images/image_{self._env._step}.png", img)
 

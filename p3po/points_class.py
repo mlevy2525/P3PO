@@ -13,7 +13,7 @@ from utilities.depth import Depth
 
 sys.path.append("/home/ademi/hermes")
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS
-from hermes.pose_estimation_ar.preprocess_aruco import draw_point
+from hermes.utils.visualization import draw_point
 intrinsics = CAM_TO_INTRINSICS['realsense-239122072252']
 F_X = intrinsics.F_X
 F_Y = intrinsics.F_Y
@@ -245,7 +245,7 @@ class PointsClass():
 
         return final_points.reshape(last_n_frames, -1)
 
-    def plot_image(self, last_n_frames=1, index_pose=None):
+    def plot_image(self, last_n_frames=1, finger_poses=None):
         """
         Plot the image with the key points overlaid on top of it. Running this will slow down your tracking, but it's good for debugging.
 
@@ -265,9 +265,9 @@ class PointsClass():
         for frame_num in range(last_n_frames):
             frame_idx = -1 * (last_n_frames - frame_num)
             curr_image = self.image_list[0, frame_idx].cpu().numpy().transpose(1, 2, 0) * 255
-            if index_pose is not None:
-                curr_image = draw_point(curr_image, pose=index_pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=(0, 255, 0))
-
+            if finger_poses is not None:
+                for pose in finger_poses:
+                    curr_image = draw_point(curr_image, pose=pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=(0, 255, 0))
 
             fig, ax = plt.subplots(1)
             ax.imshow(curr_image.astype(np.uint8))

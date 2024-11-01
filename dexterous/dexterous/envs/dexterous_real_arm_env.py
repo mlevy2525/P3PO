@@ -179,7 +179,8 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         assert action.shape[0] == 12, "Action given should be 12 dimensional action space"
 
         cur_fingertips_in_camera = self.get_fingertips_in_camera()
-        target_fingertips_in_camera = cur_fingertips_in_camera + action # actions are delta actions
+        # target_fingertips_in_camera = cur_fingertips_in_camera + action # actions are delta actions
+        target_fingertips_in_camera = action # actions are absolute actions
 
         # put the target fingertips in base frame
         H_F_Bs = []
@@ -195,7 +196,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         # use ik to get target joint positions corresponding to target fingertips
         target_joint_positions, _ = self.ik_solver.inverse_kinematics(
             H_F_Bs, self.get_joint_positions(), threshold=1e-3, learning_rate=1e-2,
-            finger_arm_weight=100, max_iterations=100, max_grad_norm=1,
+            finger_arm_weight=100, max_iterations=500, max_grad_norm=1,
         )
 
         # move the arm to target eef pose corresponding to target joint positions
