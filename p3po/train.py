@@ -102,7 +102,7 @@ class WorkspaceIL:
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):
-                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class)
+                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class, closed_loop_dataset_path=dataset_iterable._paths[0])
 
 
         # create agent
@@ -156,6 +156,10 @@ class WorkspaceIL:
         return self.global_step * self.cfg.suite.action_repeat
 
     def eval(self):
+        use_residual_setpoints = False
+        alpha = 1.0
+        print(f"{use_residual_setpoints=} {alpha=}")
+
         self.agent.train(False)
         episode_rewards = []
         successes = []
@@ -171,6 +175,8 @@ class WorkspaceIL:
             episode, total_reward = 0, 0
             eval_until_episode = utils.Until(self.cfg.suite.num_eval_episodes)
             success = []
+
+            residual = np.zeros(12, dtype=np.float32)
 
             while eval_until_episode(episode):
                 torch.cuda.empty_cache()
@@ -227,13 +233,17 @@ class WorkspaceIL:
                                 self.global_step,
                                 eval_mode=True,
                             )
+                            if use_residual_setpoints:
+                                action = action + alpha * residual
                     if self.open_loop: 
                         ol_step += 1
-                    # breakpoint()
                     time_step = self.env[env_idx].step(action)
                     self.video_recorder.record(self.env[env_idx])
                     total_reward += time_step.reward
                     step += 1
+
+                    residual = (time_step.observation["fingertips"] - action)
+                    # print(f"execution residual per fingertip: [{np.linalg.norm(residual[0:3]).item():.4f}, {np.linalg.norm(residual[3:6]).item():.4f}, {np.linalg.norm(residual[6:9]).item():.4f}, {np.linalg.norm(residual[9:12]).item():.4f}]")
 
                 episode += 1
                 success.append(time_step.observation["goal_achieved"])

@@ -645,7 +645,7 @@ class BCAgent:
 
         if self.temporal_agg:
             action = action.view(-1, self.num_queries, self._act_dim)
-            self.all_time_actions[[step], step : step + self.num_queries] = action[-1:]
+            self.all_time_actions[[step], step : step + self.num_queries] = action[-1:].to(self.all_time_actions.dtype)
             actions_for_curr_step = self.all_time_actions[:, step]
             actions_populated = torch.all(actions_for_curr_step != 0, axis=1)
             actions_for_curr_step = actions_for_curr_step[actions_populated]
