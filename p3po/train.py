@@ -74,7 +74,8 @@ class WorkspaceIL:
             self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
         )
         if self.cfg.eval:
-            self.cfg.suite.task_make_fn.max_episode_len = (10000)
+            # self.cfg.suite.task_make_fn.max_episode_len = (10000)
+            self.cfg.suite.task_make_fn.max_episode_len = (150)
         self.cfg.suite.task_make_fn.max_state_dim = (
             self.expert_replay_loader.dataset._max_state_dim
         )
@@ -102,7 +103,7 @@ class WorkspaceIL:
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):
-                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class, closed_loop_dataset_path=dataset_iterable._paths[0])
+                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class, closed_loop_dataset_path=dataset_iterable._paths[0], steps_per_obs=self.cfg.steps_per_obs)
 
 
         # create agent
@@ -237,12 +238,20 @@ class WorkspaceIL:
                                 action = action + alpha * residual
                     if self.open_loop: 
                         ol_step += 1
-                    time_step = self.env[env_idx].step(action)
-                    self.video_recorder.record(self.env[env_idx])
-                    total_reward += time_step.reward
-                    step += 1
+                    # plots = self.env[0].points_class.plot_image(last_n_frames=self.cfg.steps_per_obs)
+                    for i in range(self.cfg.steps_per_obs):
+                        # cv2.imwrite("plot_" + str(step) + ".png", plots[i][:,:,::-1])
+                        if not time_step.last():
+                            if use_residual_setpoints:
+                                time_step = self.env[env_idx].step(action[i] + residual * alpha)
+                            else:
+                                time_step = self.env[env_idx].step(action[i])
+                            self.video_recorder.record(self.env[env_idx])
+                            total_reward += time_step.reward
+                            step += 1
 
-                    residual = (time_step.observation["fingertips"] - action)
+                        if 'fingertips' in time_step.observation:
+                            residual = (time_step.observation["fingertips"] - action[i])
                     # print(f"execution residual per fingertip: [{np.linalg.norm(residual[0:3]).item():.4f}, {np.linalg.norm(residual[3:6]).item():.4f}, {np.linalg.norm(residual[6:9]).item():.4f}, {np.linalg.norm(residual[9:12]).item():.4f}]")
 
                 episode += 1

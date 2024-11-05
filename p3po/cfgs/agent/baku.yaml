@@ -23,6 +23,7 @@ history_len: ${suite.history_len}
 eval_history_len: ${suite.eval_history_len}
 separate_encoders: false # have a separate encoder for each pixel key
 temporal_agg: ${temporal_agg}
+steps_per_obs: ${steps_per_obs}
 max_episode_len: ${suite.task_make_fn.max_episode_len}
 num_queries: ${num_queries}
 use_language: ${use_language}

@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from utilities.correspondence import Correspondence
 from utilities.depth import Depth
 
-sys.path.append("/home/ademi/hermes")
+sys.path.append("/fs/cfar-projects/waypoint_rl/hermes/hermes")
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS
 from hermes.utils.visualization import draw_point
 intrinsics = CAM_TO_INTRINSICS['realsense-239122072252']
@@ -88,7 +88,7 @@ class PointsClass():
         # Set up cotracker
         sys.path.append(root_dir + "/co-tracker/")
         from cotracker.predictor import CoTrackerOnlinePredictor
-        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/cotracker2v1.pth", window_len=16).to(device)
+        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/scaled_online.pth", window_len=16).to(device)
 
 
         self.transform = transforms.Compose([ 
@@ -180,7 +180,7 @@ class PointsClass():
                 self.depth = depth[None, ...].copy()
             self.depth = np.concatenate((self.depth, depth[None, ...].copy()), axis=0)
 
-    def track_points(self, is_first_step=False, one_frame=True):
+    def track_points(self, is_first_step=False, one_frame=True, step_size=1):
         """
         Track the key points in the current image using the CoTracker model.
 
@@ -197,7 +197,7 @@ class PointsClass():
                            queries=self.semantic_similar_points[None].to(self.device))
             self.tracks = self.semantic_similar_points
         else:
-            tracks, _ = self.cotracker(self.image_list, one_frame=one_frame)
+            tracks, _ = self.cotracker(self.image_list, one_frame=one_frame, step_size=step_size)
             # Remove the support points
             tracks = tracks[:, :, 0:self.num_tracked_points, :]
 
