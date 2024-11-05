@@ -1,10 +1,31 @@
+# defaults:
+#   - _self_
+#   - task: p3po
+
+# root_dir: /home/ademi/P3PO
+
+# task_name: "open_oven_1022"
+# device: "cuda"
+
+# width: -1
+# height: -1
+# image_size_multiplier: 1
+
+# ensemble_size: 8
+# dift_layer: 1
+# dift_steps: 5
+
+# num_tracked_points: 10
+# num_fingertip_points: 4
+# dimensions: 3
+
 defaults:
   - _self_
   - task: p3po
 
-root_dir: /home/ademi/P3PO
+root_dir: /fs/cfar-projects/waypoint_rl/hermes/P3PO
 
-task_name: "open_oven_1022"
+task_name: "assembly"
 device: "cuda"
 
 width: -1
@@ -13,8 +34,9 @@ image_size_multiplier: 1
 
 ensemble_size: 8
 dift_layer: 1
-dift_steps: 5
+dift_steps: 50
 
-num_tracked_points: 10
-num_fingertip_points: 4
+num_tracked_points: 11
+num_fingertip_points: 0
+num_points: -1
 dimensions: 3

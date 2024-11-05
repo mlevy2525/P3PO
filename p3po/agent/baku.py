@@ -180,6 +180,7 @@ class BCAgent:
         eval_history_len,
         separate_encoders,
         temporal_agg,
+        steps_per_obs,
         max_episode_len,
         num_queries,
         prompt,
@@ -221,6 +222,7 @@ class BCAgent:
 
         # action chunking params
         self.temporal_agg = temporal_agg
+        self.steps_per_obs = steps_per_obs
         self.max_episode_len = max_episode_len
         self.num_queries = num_queries if self.temporal_agg else 1
 
@@ -553,18 +555,32 @@ class BCAgent:
                 to_append = self.test_aug(obs[key].transpose(1, 2, 0)).numpy()
             else:
                 to_append = obs[key]
-
-            if use_spatial_queue:
-                print(to_append.shape)
-                last_queue_state = self.observation_buffer[key][-1]
-                num_points = to_append.reshape(-1).shape[0] // 3
-                distance_to_last_state = np.linalg.norm(to_append - last_queue_state) / num_points
-                if distance_to_last_state > spatial_eps:
-                    self.observation_buffer[key].append(to_append.numpy())
-                else:
-                    print(f"did not queue this state. average distance to last state was {distance_to_last_state.item()}")
+            if self.steps_per_obs > 1 and step > 0:
+                for i in range(self.steps_per_obs):
+                    if use_spatial_queue:
+                        print(to_append[i].shape)
+                        last_queue_state = self.observation_buffer[key][-1]
+                        num_points = to_append[i].reshape(-1).shape[0] // 3
+                        distance_to_last_state = np.linalg.norm(to_append[i] - last_queue_state) / num_points
+                        if distance_to_last_state > spatial_eps:
+                            self.observation_buffer[key].append(to_append[i].numpy())
+                        else:
+                            print(f"did not queue this state. average distance to last state was {distance_to_last_state.item()}")
+                    else:
+                        self.observation_buffer[key].append(to_append[i].numpy())
             else:
-                self.observation_buffer[key].append(to_append.numpy())
+                if use_spatial_queue:
+                    print(to_append.shape)
+                    last_queue_state = self.observation_buffer[key][-1]
+                    num_points = to_append.reshape(-1).shape[0] // 3
+                    distance_to_last_state = np.linalg.norm(to_append - last_queue_state) / num_points
+                    if distance_to_last_state > spatial_eps:
+                        self.observation_buffer[key].append(to_append.numpy())
+                    else:
+                        print(f"did not queue this state. average distance to last state was {distance_to_last_state.item()}")
+                else:
+                    self.observation_buffer[key].append(to_append.numpy())
+               
             to_input = torch.as_tensor(
                 np.array(self.observation_buffer[key]), device=self.device
             ).float()
@@ -655,14 +671,16 @@ class BCAgent:
 
         if self.temporal_agg:
             action = action.view(-1, self.num_queries, self._act_dim)
-            self.all_time_actions[[step], step : step + self.num_queries] = action[-1:].to(self.all_time_actions.dtype)
-            actions_for_curr_step = self.all_time_actions[:, step]
-            actions_populated = torch.all(actions_for_curr_step != 0, axis=1)
+            # if self.steps_per_obs == 1:
+
+            self.all_time_actions[[step // self.steps_per_obs], step : step + self.num_queries] = action[-1:].to(self.all_time_actions.dtype)
+            actions_for_curr_step = self.all_time_actions[:, step : step + self.steps_per_obs]
+            actions_populated = torch.all(actions_for_curr_step != 0, axis=2)
             actions_for_curr_step = actions_for_curr_step[actions_populated]
             k = 0.01
             exp_weights = np.exp(-k * np.arange(len(actions_for_curr_step)))
             exp_weights = exp_weights / exp_weights.sum()
-            exp_weights = torch.from_numpy(exp_weights).to(self.device).unsqueeze(dim=1)
+            exp_weights = torch.from_numpy(exp_weights).to(self.device).unsqueeze(dim=1).unsqueeze(dim=2)
             action = (actions_for_curr_step * exp_weights).sum(dim=0, keepdim=True)
             if norm_stats is not None:
                 return post_process(action.cpu().numpy()[0])

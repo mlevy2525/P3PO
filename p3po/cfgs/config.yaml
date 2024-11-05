@@ -10,7 +10,7 @@ project_name: 'p3po'
 run_name: 'open_oven_1028'
 
 # Root Dir
-root_dir: /home/ademi/P3PO
+root_dir: /fs/cfar-projects/waypoint_rl/hermes/P3PO
 use_p3po: True
 
 # misc
@@ -42,7 +42,9 @@ raw_data_path: null
 
 # action chunking
 temporal_agg: true # aggregate actions over time
-num_queries: 10
+# steps_per_obs is 1 or 8
+steps_per_obs: 8
+num_queries: 8
 
 # expert dataset
 expert_dataset: ${dataloader.bc_dataset}
@@ -53,8 +55,8 @@ bc_weight: null
 
 use_wandb: false
 point_dimensions: 3
-p3po_task_name: "open_oven_1025_densehandle"  
-num_tracked_points: 54
+p3po_task_name: "assembly"  
+num_tracked_points: 11
 
 hydra:
   run:
