@@ -15,7 +15,7 @@ hidden_dim: 256
 # train settings
 num_train_steps: 601000
 log_every_steps: 1000
-save_every_steps: 50000
+save_every_steps: 5000
 history: true
 history_len: 10
 
@@ -48,3 +48,4 @@ task_make_fn:
   task_description: "just training"
   pixel_keys: ${suite.pixel_keys}
   eval: ${eval} # eval true mean use robot
+  raw_data_path: ${raw_data_path}

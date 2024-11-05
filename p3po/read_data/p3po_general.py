@@ -9,6 +9,22 @@ import torchvision.transforms as transforms
 from torch.utils.data import IterableDataset
 
 
+class AugmentWithGaussianNoise:
+    def __init__(self, mean=0.0, std=0.1):
+        self.mean = mean
+        self.std = std
+
+    def add_gaussian_noise(self, data_array):
+        # Generate Gaussian noise
+        noise = np.random.normal(self.mean, self.std, data_array.shape)
+        # Add the noise to the input data
+        noisy_data = data_array + noise
+        return noisy_data
+
+    def __call__(self, data_array):
+        # Add Gaussian noise directly
+        return self.add_gaussian_noise(data_array)
+    
 class BCDataset(IterableDataset):
     def __init__(
         self,
@@ -27,6 +43,7 @@ class BCDataset(IterableDataset):
         training_keys,
         intermediate_goal_step=30,
         store_actions=False,
+        gaussian_augmentation_std=0.1,
     ):
         self._obs_type = obs_type
         self._prompt = prompt
@@ -163,6 +180,12 @@ class BCDataset(IterableDataset):
             ]
         )
 
+        if gaussian_augmentation_std > 0:
+            self.graph_aug = AugmentWithGaussianNoise(std=gaussian_augmentation_std)
+            print(f"Using Gaussian augmentation with std {gaussian_augmentation_std}")
+        else:
+            self.graph_aug = lambda x: x
+
         # Samples from envs
         self.envs_till_idx = len(self._episodes)
 
@@ -220,6 +243,7 @@ class BCDataset(IterableDataset):
         if self._prompt == None or self._prompt == "text":
             sampled_input['actions'] = self.preprocess["actions"](sampled_action)
             sampled_input['task_emb'] = task_emb
+            sampled_input['graph'] = self.graph_aug(sampled_input['graph'])
             return sampled_input
         elif self._prompt == "goal":
             prompt_episode = self._sample_episode(env_idx)

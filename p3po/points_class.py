@@ -245,7 +245,7 @@ class PointsClass():
 
         return final_points.reshape(last_n_frames, -1)
 
-    def plot_image(self, last_n_frames=1, finger_poses=None):
+    def plot_image(self, last_n_frames=1, finger_poses=None, finger_color=(0, 255, 0)):
         """
         Plot the image with the key points overlaid on top of it. Running this will slow down your tracking, but it's good for debugging.
 
@@ -267,7 +267,7 @@ class PointsClass():
             curr_image = self.image_list[0, frame_idx].cpu().numpy().transpose(1, 2, 0) * 255
             if finger_poses is not None:
                 for pose in finger_poses:
-                    curr_image = draw_point(curr_image, pose=pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=(0, 255, 0))
+                    curr_image = draw_point(curr_image, pose=pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=finger_color)
 
             fig, ax = plt.subplots(1)
             ax.imshow(curr_image.astype(np.uint8))

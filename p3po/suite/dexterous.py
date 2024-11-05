@@ -131,6 +131,8 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         observation["task_emb"] = self.task_emb
         observation["goal_achieved"] = False
         observation["fingertips"] = obs["fingertips"]
+        if "ik_fingertips" in obs:
+            observation["ik_fingertips"] = obs["ik_fingertips"]
         return observation
 
     def step(self, action):
@@ -145,6 +147,8 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
         observation["task_emb"] = self.task_emb
         observation["goal_achieved"] = done
         observation["fingertips"] = obs["fingertips"]
+        if "ik_fingertips" in obs:
+            observation["ik_fingertips"] = obs["ik_fingertips"]
         return observation, reward, done, info
 
     def observation_spec(self):
@@ -235,6 +239,8 @@ class FrameStackWrapper(dm_env.Environment):
         obs["task_emb"] = time_step.observation["task_emb"]
         obs["goal_achieved"] = time_step.observation["goal_achieved"]
         obs["fingertips"] = time_step.observation["fingertips"]
+        if "ik_fingertips" in time_step.observation:
+            obs["ik_fingertips"] = time_step.observation["ik_fingertips"]
         return time_step._replace(observation=obs)
 
     def _extract_pixels(self, time_step):
@@ -396,6 +402,7 @@ def make(
     task_description,
     pixel_keys,
     eval,  # True means use_robot=True
+    raw_data_path,
 ):
     # env = gym.make(
     #     "Dexterous-v1",
@@ -408,6 +415,7 @@ def make(
     env = DexterousRealArmEnv(
         actor_name="hand_and_arm",
         use_robot=eval,
+        raw_data_path=raw_data_path,
     )
 
     # apply wrappers

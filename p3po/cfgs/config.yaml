@@ -38,6 +38,8 @@ eval_only: false
 experiment: train
 experiment_label: ${policy_head}
 
+raw_data_path: null
+
 # action chunking
 temporal_agg: true # aggregate actions over time
 num_queries: 10

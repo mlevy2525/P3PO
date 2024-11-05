@@ -6,12 +6,14 @@ import torchvision.transforms as T
 from PIL import Image
 from scipy.spatial.transform import Rotation
 from gymnasium import spaces
-
+import os
+import pickle
+import h5py
 import sys
 sys.path.append("/home/ademi/hermes")
 from hermes.environments.base import BaseDexterousArmEnv
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS, MARKER_LENGTH
-from hermes.utils.real_constants import ALLEGRO_HOME, FRANKA_HOME_CARTESIAN, KINOVA_HOME_CARTESIAN
+from hermes.utils.real_constants import ALLEGRO_HOME, FRANKA_HOME_CARTESIAN, KINOVA_HOME_CARTESIAN, H_I_F
 from hermes.inverse_kinematics.allegro_with_arm_sgd_ik_solver import FingertipArmIKSolverSGD
 from hermes.calibration.calibrate_base import CalibrateBase
 from hermes.replayers.hermes_real import convert_Tpose_to_7dof, map_ik_allegro_mount_to_franka_cartesian_pose
@@ -28,7 +30,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
 
     def __init__(
         self, use_object: bool = False, actor_name: str = "hand_and_arm", render_obs: bool = True,
-        arm_type: str = "franka", use_robot=True
+        arm_type: str = "franka", use_robot=True, raw_data_path: str = None
     ):
         assert arm_type in ["franka", "kinova"]
         self.arm_type = arm_type
@@ -36,6 +38,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         self.use_object = use_object
         self.actor_name = actor_name
         self.use_robot = use_robot
+        self.raw_data_path = raw_data_path
 
         if use_object:
             print(
@@ -108,10 +111,73 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         print("resetting to home position")
         self.reset()
 
-    def reset(self):
-        if self.use_robot:
-            self.arm.move_coords(self.arm_home_position, duration=10)
-            self.hand.move(ALLEGRO_HOME)
+    def _load_files(self, demo_path):
+        # Load the indices files 
+        image_indices_path = os.path.join(
+            demo_path, "image_indices_cam_{}.pkl".format(self.CAM_ID)
+        )
+        with open(image_indices_path, "rb") as file:
+            self.image_indices = pickle.load(file)
+
+        hand_pose_indices_path = os.path.join(
+            demo_path, 'fingertips.pkl'
+        )
+        hand_poses_path = os.path.join(
+            demo_path, 'fingertips.h5'
+        )
+        with open(hand_pose_indices_path, 'rb') as file: 
+            self.hand_pose_indices = pickle.load(file)
+
+        with h5py.File(hand_poses_path, "r") as file:
+            self.fingertips_wrt_world = np.asarray(file['fingertips'])
+
+        # Load the aruco
+        aruco_pose_path = os.path.join(demo_path, 'aruco_postprocessed.npz')
+        self.aruco_poses = np.load(aruco_pose_path)
+
+    def reset(
+        self,
+    ):  # Assumption: self.image_indices should be loaded already!
+        
+        if self.raw_data_path is None:
+            return self.get_state()
+
+        self._load_files(demo_path = self.raw_data_path)
+
+        # Get the initial aruco pose
+        _, image_frame_id = self.image_indices[0]
+        aruco_id = image_frame_id - self.aruco_poses["indices"][0]
+
+        H_A_C = self.aruco_poses["poses"][aruco_id]
+        H_A_C = np.concatenate([H_A_C, np.array([[0, 0, 0, 1]])], axis=0)
+        H_A_B = np.linalg.pinv(self.H_B_C) @ H_A_C
+
+        # Find the arm end effector from the aruco pose
+        # Get the transformations between tne aruco to franka cartesian
+        # For now we'll assume that there is no rotation between the aruco and the
+        # IK EEF
+        H_AR_I = np.asarray(
+            [[-1, 0, 0, 0], [0, 0, 1, 0.03], [0, 1, 0, -0.07], [0, 0, 0, 1]]
+        )
+        H_AR_F = H_I_F @ H_AR_I  # Robot aruco in actual franka end effector frame
+
+        # Visualize the aruco with respect to camera using this H_A_F
+        franka_cart = self.arm.get_cartesian_position()
+        H_F_B = np.eye(4)  # Franka in base
+        H_F_B[:3, :3] = Rotation.from_quat(franka_cart[-4:]).as_matrix()
+        H_F_B[:3, 3] = franka_cart[:3]
+
+        # Now get the desired arm position wrt base
+        H_F_B = H_A_B @ np.linalg.pinv(H_AR_F)
+        # Turn this into quaternion
+        desired_quat = Rotation.from_matrix(H_F_B[:3, :3]).as_quat()
+        desired_tvec = H_F_B[:3, 3]
+        desired_franka_cart = np.concatenate([desired_tvec, desired_quat], axis=0)
+
+        print(f"CURRENT ARM POSE: {self.arm.get_cartesian_position()}")
+        print(f"RESETTING ARM TO: {desired_franka_cart}")
+        self.arm.move_coords(desired_franka_cart, duration=10)
+        self.hand.home()
         return self.get_state()
 
     def get_state(self):
@@ -140,6 +206,17 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         for hfb in robot_fingertips_in_base:
             finger = self.H_B_C @ hfb
             finger = convert_Tpose_to_7dof(finger)
+            robot_fingertips_in_camera.extend(finger[:3])
+        robot_fingertips_in_camera = np.array(robot_fingertips_in_camera)
+        return robot_fingertips_in_camera
+    
+    def get_any_fingertips_in_camera(self, joint_positions):
+        robot_fingertips_in_base = self.ik_solver.forward_kinematics(
+            current_joint_positions=joint_positions)
+        robot_fingertips_in_camera = []
+        for hfb in robot_fingertips_in_base:
+            finger_3x4 = self.H_B_C @ hfb
+            finger = convert_Tpose_to_7dof(finger_3x4)
             robot_fingertips_in_camera.extend(finger[:3])
         robot_fingertips_in_camera = np.array(robot_fingertips_in_camera)
         return robot_fingertips_in_camera
@@ -189,7 +266,8 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
             H_F_C = np.eye(4)
             H_F_C[:3, 3] = target_fingertip_in_camera
             H_F_B = np.linalg.pinv(self.H_B_C) @ H_F_C
-            H_F_B[:3,3] += [0.025, 0.025, 0.02]
+            # H_F_B[:3,3] += [0.025, 0.025, 0.02]
+            H_F_B[:3,3] += [0, 0, 0.02]
             H_F_Bs.append(H_F_B)
         H_F_Bs = np.stack(H_F_Bs, axis=0)   
 
@@ -214,6 +292,14 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         action = np.concatenate([arm_pose, target_joint_positions[self.num_arm_joints:]], axis=0)
         # input("Press Enter to take an action...")
         obs = self.step_control(action)
+
+        obs['ik_fingertips'] = self.get_any_fingertips_in_camera(target_joint_positions) 
+
+        # target_fingertips_in_camera = self.get_any_fingertips_in_camera(target_joint_positions)
+        # actual_fingertips_in_camera = obs["fingertips"]
+        # residual = target_fingertips_in_camera - actual_fingertips_in_camera
+        # print(f"execution residual per fingertip: [{np.linalg.norm(residual[0:3]).item():.4f}, {np.linalg.norm(residual[3:6]).item():.4f}, {np.linalg.norm(residual[6:9]).item():.4f}, {np.linalg.norm(residual[9:12]).item():.4f}]")
+
         return obs, 0, 0, {}
 
     def step_control(self, action): # Don't move the arm with move_coords but just move with arm_control
@@ -223,9 +309,11 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
 
         if self.arm is not None:
             self.arm.arm_control(action[:7])
+            print("moved arm")
 
         if self.hand is not None:
             self.hand.move(action[7:])
+            print("moved hand")
 
         return self.get_state()
     

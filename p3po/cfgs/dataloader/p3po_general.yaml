@@ -14,3 +14,4 @@ bc_dataset:
   training_keys: ${training_keys}
   img_size: 84
   store_actions: true
+  gaussian_augmentation_std: 0.1

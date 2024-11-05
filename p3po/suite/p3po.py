@@ -57,7 +57,6 @@ class P3POWrapper(dm_env.Environment):
         obs['graph'] = self.points_class.get_points()[-1]
         points_dimensions = self.points_class.num_tracked_points * self.points_class.dimensions
         obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
-        
         if self.nearest_neighbor_state or self.save_nearest_neighbor_info:
             min_distance = float('inf')
             min_idx = 0
@@ -98,6 +97,10 @@ class P3POWrapper(dm_env.Environment):
 
         obs['graph'] = self.points_class.get_points()[-1]
         points_dimensions = self.points_class.num_tracked_points * self.points_class.dimensions
+        # if 'ik_fingertips' in obs:
+        #     obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(action)])
+        # else:
+        #     obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
         obs['graph'] = torch.concatenate([obs['graph'][:points_dimensions], torch.tensor(obs['fingertips'])])
 
         if self.nearest_neighbor_state or self.save_nearest_neighbor_info:
@@ -129,8 +132,31 @@ class P3POWrapper(dm_env.Environment):
         thumb_pose = np.eye(4)
         thumb_pose[:3, 3] = obs['fingertips'][9:12]
         finger_poses = [index_pose, middle_pose, ring_pose, thumb_pose]
-        img = self.points_class.plot_image(finger_poses=finger_poses)[-1]
+        img = self.points_class.plot_image(finger_poses=finger_poses, finger_color=(0, 255, 0))[-1]
+
+        # index_pose = np.eye(4)
+        # index_pose[:3, 3] = obs['ik_fingertips'][0:3]
+        # middle_pose = np.eye(4)
+        # middle_pose[:3, 3] = obs['ik_fingertips'][3:6]
+        # ring_pose = np.eye(4)
+        # ring_pose[:3, 3] = obs['ik_fingertips'][6:9]
+        # thumb_pose = np.eye(4)
+        # thumb_pose[:3, 3] = obs['ik_fingertips'][9:12]
+        # finger_poses = [index_pose, middle_pose, ring_pose, thumb_pose]
+        # img = self.points_class.plot_image(finger_poses=finger_poses, finger_color=(0, 0, 255))[-1]
+
+        # index_pose = np.eye(4)
+        # index_pose[:3, 3] = action[0:3]
+        # middle_pose = np.eye(4)
+        # middle_pose[:3, 3] = action[3:6]
+        # ring_pose = np.eye(4)
+        # ring_pose[:3, 3] = action[6:9]
+        # thumb_pose = np.eye(4)
+        # thumb_pose[:3, 3] = action[9:12]
+        # finger_poses = [index_pose, middle_pose, ring_pose, thumb_pose]
+        # img = self.points_class.plot_image(finger_poses=finger_poses, finger_color=(255, 0, 0))[-1]
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
         cv2.imwrite(f"/home/ademi/eval_dump/plotted_images/image_{self._env._step}.png", img)
         if self.save_nearest_neighbor_info:
             with open("/home/ademi/eval_dump/nearest_neighbor_info.pkl", "wb") as f:
