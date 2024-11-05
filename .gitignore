@@ -1,3 +1,5 @@
+p3po/data_generation/*_framewise/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
