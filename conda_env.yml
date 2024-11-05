@@ -1,4 +1,4 @@
-name: p3po
+name: hermes
 channels:
   - defaults
 dependencies:
