@@ -13,14 +13,14 @@ discount: 0.99
 hidden_dim: 256
 
 # train settings
-num_train_steps: 601000
+num_train_steps: 150010
 log_every_steps: 1000
 save_every_steps: 5000
 history: true
 history_len: 10
 
 # eval
-eval_every_steps: 200000
+eval_every_steps: 10
 num_eval_episodes: 5
 eval_history_len: 10
 

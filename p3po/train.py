@@ -99,6 +99,7 @@ class WorkspaceIL:
             points_cfg["dimensions"] = self.cfg.point_dimensions
             points_cfg["task_name"] = self.cfg.p3po_task_name
             points_cfg["num_tracked_points"] = self.cfg.num_tracked_points
+            points_cfg["unproject_depth"] = self.cfg.unproject_depth
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):

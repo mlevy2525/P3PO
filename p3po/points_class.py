@@ -21,7 +21,7 @@ C_X = intrinsics.C_X
 C_Y = intrinsics.C_Y
 
 class PointsClass():
-    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_fingertip_points, num_tracked_points, dimensions, **kwargs):
+    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_fingertip_points, num_tracked_points, dimensions, unproject_depth, **kwargs):
         """
         Initialize the Points Class for finding key points in the episode.
 
@@ -105,6 +105,7 @@ class PointsClass():
         self.dimensions = dimensions
         self.num_tracked_points = num_tracked_points
         self.num_fingertip_points = num_fingertip_points
+        self.unproject_depth = unproject_depth
 
     # Image passed in here must be in RGB format
     def add_to_image_list(self, image):
@@ -232,10 +233,15 @@ class PointsClass():
                     except:
                         depth = 0
 
-                    x = (self.tracks[0, frame_idx, point][0] - C_X) * depth
-                    y = (self.tracks[0, frame_idx, point][1] - C_Y) * depth
-                    x /= F_X
-                    y /= F_Y
+                    # NOTE: experimenting with concat instead of unproject
+                    if self.unproject_depth:
+                        x = (self.tracks[0, frame_idx, point][0] - C_X) * depth
+                        y = (self.tracks[0, frame_idx, point][1] - C_Y) * depth
+                        x /= F_X
+                        y /= F_Y
+                    else:
+                        x = self.tracks[0, frame_idx, point][0] / width
+                        y = self.tracks[0, frame_idx, point][1] / height
 
                     final_points[frame_num, point] = torch.tensor([x, y, depth])
                 else:

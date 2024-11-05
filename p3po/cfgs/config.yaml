@@ -25,7 +25,7 @@ batch_size: 16
 obs_type: "features" # pixels, features
 training_keys: ['graph']
 depth_keys: ['depth']
-num_demos_per_task: 100
+num_demos_per_task: 1000
 encoder_type: 'resnet' # base, resnet
 policy_type: 'gpt' # mlp, gpt
 policy_head: deterministic # deterministic, gmm, bet, diffusion, vqbet
@@ -55,6 +55,7 @@ use_wandb: false
 point_dimensions: 3
 p3po_task_name: "open_oven_1025_densehandle"  
 num_tracked_points: 54
+unproject_depth: true
 
 hydra:
   run:

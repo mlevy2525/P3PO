@@ -117,7 +117,7 @@ if __name__ == "__main__":
                 image = points_class.plot_image()[-1]
                 cv2.imwrite(f'{task_name}_{dimensions}d_frames_framewise/{directory}/{task_name}_{idx+1}.png', image)
 
-        with imageio.get_writer(f'{task_name}_{dimensions}d_gifs_framewise/{directory}_{task_name}.gif', mode='I', duration=2) as writer:  
+        with imageio.get_writer(f'{task_name}_{dimensions}d_gifs_framewise/{directory}_{task_name}.gif', mode='I', duration=4) as writer:  
             for filetask_name in os.listdir(f'{task_name}_{dimensions}d_frames_framewise/{directory}'):
                 if filetask_name.endswith(".png"):
                     image = imageio.imread(f'{task_name}_{dimensions}d_frames_framewise/{directory}/{filetask_name}')
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
         trajectories[directory.split('_')[-1]] = graphs
 
-    file_path = f'{preprocessed_data_dir}/{task_name}_{dimensions}d_framewise.pkl'
+    file_path = f'{preprocessed_data_dir}/{task_name}_{dimensions}d_concatdepth_framewise.pkl'
     with open(str(file_path), 'wb') as f:
         pickle.dump(trajectories, f)
     print(f"Saved points to {file_path}")

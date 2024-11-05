@@ -232,6 +232,8 @@ class BCDataset(IterableDataset):
             act[
                 : min(len(actions), sample_idx + num_actions) - sample_idx
             ] = actions[sample_idx : sample_idx + num_actions]
+            if len(actions) < sample_idx + num_actions:
+                act[len(actions):] = actions[-1]
             sampled_action = np.lib.stride_tricks.sliding_window_view(
                 act, (self._num_queries, actions.shape[-1])
             )
