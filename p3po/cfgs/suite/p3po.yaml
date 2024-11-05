@@ -4,7 +4,8 @@ defaults:
 
 root_dir: /home/ademi/P3PO
 
-task_name: "pick_block_20241103a_30hz_nooccpoints"
+# task_name: "pick_block_20241103a_30hz_nooccpoints"
+task_name: "open_drawer_20241103b_30hz"
 device: "cuda"
 
 width: -1
@@ -15,7 +16,8 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 5
 
-num_tracked_points: 27
+# num_tracked_points: 8
+num_tracked_points: 29
 num_fingertip_points: 4
 dimensions: 3
 unproject_depth: true

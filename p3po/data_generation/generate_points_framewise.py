@@ -1,30 +1,36 @@
+import argparse
 import os
-os.environ['MUJOCO_GL'] = 'egl'
 import pickle
-from pathlib import Path
+import shutil
 import sys
-sys.path.append('../')
-from points_class import PointsClass
 import yaml
-import numpy as np
+
 import cv2
-import imageio
 import h5py
+import imageio.v3 as iio
+import numpy as np
 from PIL import Image
-import pickle as pkl
 from tqdm import tqdm
 
+sys.path.append('../')
+from points_class import PointsClass
+
+
 if __name__ == "__main__":
-    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--preprocessed_data_dir', type=str, required=True, help='path to demo data folder with preprocessed outputs')
+    parser.add_argument('--task_name', type=str, required=True, help='task name')
+    parser.add_argument('--num_tracked_points', type=int, required=True, help='number of tracked points in this task')
+    parser.add_argument('--unproject_depth', action='store_true', default=False, help='whether to use unprojected depth points (3d)')
     args = parser.parse_args()
-    
+
     save_images = True
     gt_depth = True
-    orig_bgr = True
-    
+
     preprocessed_data_dir = args.preprocessed_data_dir
+    task_name = args.task_name
+    num_tracked_points = args.num_tracked_points
+    unproject_depth = args.unproject_depth
 
     with open("../cfgs/suite/p3po.yaml") as stream:
         try:
@@ -32,100 +38,86 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             print(exc)
 
-    task_name = cfg['task_name']
-    coords = pkl.load(open(f'../../coordinates/coords/{task_name}.pkl', 'rb'))
-    cfg['num_tracked_points'] = len(coords)
-    print(f"Number of tracked points: {cfg['num_tracked_points']}")
-    points_class = PointsClass(**cfg)
-    dimensions = cfg['dimensions']
+    cfg['task_name'] = task_name
+    cfg['num_tracked_points'] = num_tracked_points
+    cfg['unproject_depth'] = unproject_depth
 
-    if os.path.exists(f'{task_name}_{dimensions}d_frames_framewise'):
-        import shutil
-        shutil.rmtree(f'{task_name}_{dimensions}d_frames_framewise')
-    os.makedirs(f'{task_name}_{dimensions}d_frames_framewise', exist_ok=True)
-    if os.path.exists(f'{task_name}_{dimensions}d_gifs_framewise'):
-        import shutil
-        shutil.rmtree(f'{task_name}_{dimensions}d_gifs_framewise')
-    os.makedirs(f'{task_name}_{dimensions}d_gifs_framewise', exist_ok=True)
+    print(f'using preprocessed_data_dir={preprocessed_data_dir}, cfg={cfg}')
+
+    coords = pickle.load(open(f'../../coordinates/coords/{task_name}.pkl', 'rb'))
+    if len(coords) != num_tracked_points:
+        raise RuntimeError('Number of points found in PKL does not match the number specified !!')
+
+    points_class = PointsClass(**cfg)
+
+    point_type = '3d' if unproject_depth else '2.5d'
+    frames_dir = f'{task_name}_{point_type}_frames_framewise'
+    gifs_dir = f'{task_name}_{point_type}_gifs_framewise'
+
+    if os.path.exists(frames_dir):
+        shutil.rmtree(frames_dir)
+    os.makedirs(frames_dir, exist_ok=True)
+    if os.path.exists(gifs_dir):
+        shutil.rmtree(gifs_dir)
+    os.makedirs(gifs_dir, exist_ok=True)
 
     graphs_list = []
     trajectories = {}
-    for directory in tqdm(os.listdir(preprocessed_data_dir)):
-        if 'demonstration' not in directory:
-            continue
-        path = f'{preprocessed_data_dir}/{directory}/cam_3_rgb_images'
-        depth_path = f'{preprocessed_data_dir}/{directory}/cam_3_depth.h5'
-        print(f"Loading frames from {path}")
-        try:
-            image_indices = pkl.load(open(f'{preprocessed_data_dir}/{directory}/image_indices_cam_3.pkl', 'rb'))
-            image_indices = [entry[1] for entry in image_indices]
-            images = [np.array(Image.open(f'{path}/frame_{str(file_num).zfill(5)}.png')) for file_num in image_indices]
-        except:
-            print(f"Failed to load images from {path}")
-            continue
-        with h5py.File(depth_path, 'r') as h5_file:
-            depth_dataset = h5_file['depth_images']
-            depth_images = [depth_dataset[idx] for idx in image_indices]
-        graphs = []
+    directories = sorted([d for d in os.listdir(preprocessed_data_dir) if d.startswith('demonstration_')])
+    with tqdm(total=len(directories)) as pbar:
+        for directory in directories:
+            pbar.set_postfix({'directory': directory})
 
-        points_class.reset_episode()
+            path = f'{preprocessed_data_dir}/{directory}/cam_3_rgb_images'
+            depth_path = f'{preprocessed_data_dir}/{directory}/cam_3_depth.h5'
 
-        if orig_bgr:
-            points_class.add_to_image_list(images[0][:,:,::-1])
-        else:
-            points_class.add_to_image_list(images[0])
+            try:
+                image_indices = pickle.load(open(f'{preprocessed_data_dir}/{directory}/image_indices_cam_3.pkl', 'rb'))
+                image_indices = [entry[1] for entry in image_indices]
+                images = [np.array(Image.open(f'{path}/frame_{str(file_num).zfill(5)}.png')) for file_num in image_indices]
+            except:
+                print(f"Failed to load images from {path}")
+                continue
+            with h5py.File(depth_path, 'r') as h5_file:
+                depth_dataset = h5_file['depth_images']
+                depth_images = [depth_dataset[idx] for idx in image_indices]
 
-        points_class.find_semantic_similar_points()
-        points_class.track_points(is_first_step=True)
-        points_class.track_points()
+            if os.path.exists(f'{frames_dir}/{directory}'):
+                shutil.rmtree(f'{frames_dir}/{directory}')
+            os.makedirs(f'{frames_dir}/{directory}')
 
-        if gt_depth:
-            depth_image = depth_images[0] / 1000
-            points_class.set_depth(depth_image)
-        else:
-            points_class.get_depth()
-
-        graph = points_class.get_points()
-
-        graphs.append(graph)
-
-        if os.path.exists(f'{task_name}_{dimensions}d_frames_framewise/{directory}'):
-            import shutil
-            shutil.rmtree(f'{task_name}_{dimensions}d_frames_framewise/{directory}')
-        os.makedirs(f'{task_name}_{dimensions}d_frames_framewise/{directory}')
-        
-        if save_images:
-            image = points_class.plot_image()[-1]
-            cv2.imwrite(f'{task_name}_{dimensions}d_frames_framewise/{directory}/{task_name}_0.png', image)
-
-        for idx, image in enumerate(images[1:]):
-            if orig_bgr:
-                points_class.add_to_image_list(image[:,:,::-1])
-            else:
+            graphs = []
+            frames = []
+            points_class.reset_episode()
+            for idx, image in enumerate(images):
                 points_class.add_to_image_list(image)
-            points_class.track_points()
-            if gt_depth:
-                depth_image = depth_images[idx] / 1000
-                points_class.set_depth(depth_image)
-            else:
-                points_class.get_depth()
-            
-            graph = points_class.get_points()
-                
-            graphs.append(graph)
-            if save_images:
-                image = points_class.plot_image()[-1]
-                cv2.imwrite(f'{task_name}_{dimensions}d_frames_framewise/{directory}/{task_name}_{idx+1}.png', image)
 
-        with imageio.get_writer(f'{task_name}_{dimensions}d_gifs_framewise/{directory}_{task_name}.gif', mode='I', duration=4) as writer:  
-            for filetask_name in os.listdir(f'{task_name}_{dimensions}d_frames_framewise/{directory}'):
-                if filetask_name.endswith(".png"):
-                    image = imageio.imread(f'{task_name}_{dimensions}d_frames_framewise/{directory}/{filetask_name}')
-                    writer.append_data(image)
+                if idx == 0:
+                    points_class.find_semantic_similar_points()
+                    points_class.track_points(is_first_step=True)
 
-        trajectories[directory.split('_')[-1]] = graphs
+                points_class.track_points()
 
-    file_path = f'{preprocessed_data_dir}/{task_name}_{dimensions}d_concatdepth_framewise.pkl'
+                if gt_depth:
+                    depth_image = depth_images[0] / 1000
+                    points_class.set_depth(depth_image)
+                else:
+                    points_class.get_depth()
+
+                graph = points_class.get_points()
+                graphs.append(graph)
+
+                if save_images:
+                    image = points_class.plot_image()[-1]
+                    frames.append(image)
+                    cv2.imwrite(f'{frames_dir}/{directory}/{task_name}_{idx}.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+
+            if len(frames) > 0:
+                iio.imwrite(f'{gifs_dir}/{directory}_{task_name}.gif', frames, duration=3, format='gif', loop=0)
+            trajectories[directory.split('_')[-1]] = graphs
+            pbar.update(1)
+
+    file_path = f'{preprocessed_data_dir}/{task_name}_{point_type}_cov3_framewise.pkl'
     with open(str(file_path), 'wb') as f:
         pickle.dump(trajectories, f)
     print(f"Saved points to {file_path}")
