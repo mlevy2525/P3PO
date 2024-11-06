@@ -87,7 +87,7 @@ class Correspondence():
             The coordinates of the points to find correspondence between the expert image and the current image.
         """
 
-        with torch.no_grad():
+        with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
             curr_image_shape = (current_image.shape[2], current_image.shape[1])
             current_image = transforms.Resize((self.height, self.width))(current_image)
             current_image_features = self.dift.forward(((current_image - .5)*2), prompt=self.prompt, ensemble_size=self.ensemble_size, up_ft_index=self.dift_layer, t=self.dift_steps)

@@ -54,4 +54,7 @@ python train.py \
     eval_only=true \
     load_bc=true \
     temporal_agg=$temporal_agg \
-    unproject_depth=$unproject_depth
+    unproject_depth=$unproject_depth \
+    hydra.run.dir=/tmp/hydra-junk \
+    hydra.sweep.dir=/tmp/hydra-junk \
+    hydra.launcher.submitit_folder=/tmp/hydra-junk

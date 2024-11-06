@@ -32,10 +32,10 @@ class P3POWrapper(dm_env.Environment):
             maximum=np.inf,
             name="graph",
         )
-        if os.path.exists("/home/ademi/eval_dump/plotted_images"):
+        if os.path.exists("./eval_dump/plotted_images"):
             import shutil
-            shutil.rmtree("/home/ademi/eval_dump/plotted_images")
-        os.makedirs("/home/ademi/eval_dump/plotted_images", exist_ok=True)
+            shutil.rmtree("./eval_dump/plotted_images")
+        os.makedirs("./eval_dump/plotted_images", exist_ok=True)
 
     def reset(self, **kwargs):
         observation = self._env.reset(**kwargs)
