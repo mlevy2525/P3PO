@@ -44,6 +44,7 @@ class BCDataset(IterableDataset):
         intermediate_goal_step=30,
         store_actions=False,
         gaussian_augmentation_std=0.1,
+        delta_actions=False,
     ):
         self._obs_type = obs_type
         self._prompt = prompt
@@ -52,6 +53,7 @@ class BCDataset(IterableDataset):
         self._img_size = img_size
         self._intermediate_goal_step = intermediate_goal_step
         self._keys = training_keys
+        self._delta_actions = delta_actions
 
         # temporal aggregation
         self._temporal_agg = temporal_agg
@@ -232,8 +234,11 @@ class BCDataset(IterableDataset):
             act[
                 : min(len(actions), sample_idx + num_actions) - sample_idx
             ] = actions[sample_idx : sample_idx + num_actions]
-            if len(actions) < sample_idx + num_actions:
-                act[len(actions):] = actions[-1]
+            if self._delta_actions:
+                pass
+            else:
+                if len(actions) < sample_idx + num_actions:
+                    act[len(actions):] = actions[-1]
             sampled_action = np.lib.stride_tricks.sliding_window_view(
                 act, (self._num_queries, actions.shape[-1])
             )

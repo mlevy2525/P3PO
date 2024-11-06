@@ -30,7 +30,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
 
     def __init__(
         self, use_object: bool = False, actor_name: str = "hand_and_arm", render_obs: bool = True,
-        arm_type: str = "franka", use_robot=True, raw_data_path: str = None
+        arm_type: str = "franka", use_robot=True, raw_data_path: str = None, delta_actions=False,
     ):
         assert arm_type in ["franka", "kinova"]
         self.arm_type = arm_type
@@ -39,6 +39,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         self.actor_name = actor_name
         self.use_robot = use_robot
         self.raw_data_path = raw_data_path
+        self.delta_actions = delta_actions
 
         if use_object:
             print(
@@ -256,8 +257,10 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         assert action.shape[0] == 12, "Action given should be 12 dimensional action space"
 
         cur_fingertips_in_camera = self.get_fingertips_in_camera()
-        # target_fingertips_in_camera = cur_fingertips_in_camera + action # actions are delta actions
-        target_fingertips_in_camera = action # actions are absolute actions
+        if self.delta_actions:
+            target_fingertips_in_camera = cur_fingertips_in_camera + action 
+        else:
+            target_fingertips_in_camera = action 
 
         # put the target fingertips in base frame
         H_F_Bs = []

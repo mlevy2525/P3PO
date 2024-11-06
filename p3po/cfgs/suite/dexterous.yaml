@@ -49,3 +49,4 @@ task_make_fn:
   pixel_keys: ${suite.pixel_keys}
   eval: ${eval} # eval true mean use robot
   raw_data_path: ${raw_data_path}
+  delta_actions: ${delta_actions}

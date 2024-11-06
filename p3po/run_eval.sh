@@ -35,6 +35,7 @@ keypoints_type=3
 temporal_agg=true
 point_dimensions=3
 history_len=10
+delta_actions=false
 
 
 # command
@@ -55,6 +56,7 @@ python train.py \
     load_bc=true \
     temporal_agg=$temporal_agg \
     keypoints_type=$keypoints_type \
+    delta_actions=$delta_actions \
     hydra.run.dir=/tmp/hydra-junk \
     hydra.sweep.dir=/tmp/hydra-junk \
     hydra.launcher.submitit_folder=/tmp/hydra-junk

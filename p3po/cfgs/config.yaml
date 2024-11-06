@@ -56,6 +56,7 @@ point_dimensions: 3
 p3po_task_name: "open_oven_1025_densehandle"  
 num_tracked_points: 54
 keypoints_type: 3
+delta_actions: false
 
 hydra:
   run:

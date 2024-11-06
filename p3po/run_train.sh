@@ -28,6 +28,7 @@ history_len=10
 gaussian_augmentation_std=0.1
 num_train_steps=150010
 save_every_steps=5000
+delta_actions=false
 
 
 # command
@@ -47,4 +48,5 @@ python train.py \
     num_tracked_points=$num_tracked_points \
     dataloader.bc_dataset.gaussian_augmentation_std=$gaussian_augmentation_std \
     temporal_agg=$temporal_agg \
-    keypoints_type=$keypoints_type
+    keypoints_type=$keypoints_type \
+    delta_actions=$delta_actions 

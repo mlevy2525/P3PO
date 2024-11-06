@@ -403,6 +403,7 @@ def make(
     pixel_keys,
     eval,  # True means use_robot=True
     raw_data_path,
+    delta_actions,
 ):
     # env = gym.make(
     #     "Dexterous-v1",
@@ -416,6 +417,7 @@ def make(
         actor_name="hand_and_arm",
         use_robot=eval,
         raw_data_path=raw_data_path,
+        delta_actions=delta_actions,
     )
 
     # apply wrappers
