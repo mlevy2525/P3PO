@@ -1,5 +1,3 @@
-p3po/data_generation/*_framewise/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -181,3 +179,5 @@ processed_data/*
 processed_data/points/*
 processed_data/graphs/*
 expert_demos/metaworld/*
+p3po/data_generation/*_framewise/
+dataset_plots/

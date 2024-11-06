@@ -12,6 +12,13 @@ run_name="pick_block_20241103a_30hz_nooccpoints_3d_abs_actions_minlength33_10hz"
 task="pick_block_20241103a_30hz_nooccpoints_3d_abs_actions_minlength33_10hz_closed_loop_dataset"
 num_tracked_points=8
 
+# open_drawer_20241103b
+# --------
+# p3po_task_name="open_drawer_20241103b_30hz"
+# run_name="open_drawer_20241103b_30hz_3d_abs_actions_minlength33_10hz"
+# task="open_drawer_20241103b_30hz_3d_abs_actions_minlength33_10hz_closed_loop_dataset"
+# num_tracked_points=29
+
 
 # these probably won't change as much
 unproject_depth=true

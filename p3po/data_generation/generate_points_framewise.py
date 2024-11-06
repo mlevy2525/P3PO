@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import pickle
 import shutil
@@ -61,11 +62,16 @@ if __name__ == "__main__":
         shutil.rmtree(gifs_dir)
     os.makedirs(gifs_dir, exist_ok=True)
 
+    with open(os.path.join(preprocessed_data_dir, "valid_demo_ids.json"), "r") as f:
+        valid_demo_ids = json.load(f)
+        valid_demo_ids = sorted(map(int, valid_demo_ids))
+
     graphs_list = []
     trajectories = {}
     directories = sorted([d for d in os.listdir(preprocessed_data_dir) if d.startswith('demonstration_')])
-    with tqdm(total=len(directories)) as pbar:
-        for directory in directories:
+    with tqdm(total=len(valid_demo_ids)) as pbar:
+        for demo_id in valid_demo_ids:
+            directory = f"demonstration_{demo_id}"
             pbar.set_postfix({'directory': directory})
 
             path = f'{preprocessed_data_dir}/{directory}/cam_3_rgb_images'
