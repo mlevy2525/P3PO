@@ -5,8 +5,8 @@ After running all the preprocessing commands in `hermes`, continue preprocessing
 cd p3po/
 
 # Set the following variables
-export PREPROCESSDIR="/home/ademi/hermes/data/pick_block_20241103a_preprocessed_30hz"
-export TASKNAME="pick_block_20241103a_30hz_nooccpoints"
+export PREPROCESSDIR="/home/ademi/hermes/data/open_microwave_20241106a_preprocessed_30hz"
+export TASKNAME="open_microwave_20241106a_30hz"
 # export PREPROCESSDIR="/home/ademi/hermes/data/open_drawer_20241103b_preprocessed_30hz"
 # export TASKNAME="open_drawer_20241103b_30hz"
 
@@ -18,11 +18,14 @@ ipython label_points.ipynb
 
 # Run cotracker on the entire dataset (this will take about 1 min/iter)
 cd data_generation/
-python generate_points_framewise.py --preprocessed_data_dir $PREPROCESSDIR --task_name $TASKNAME --num_tracked_points 8 --unproject_depth
+python generate_points_framewise.py --preprocessed_data_dir $PREPROCESSDIR --task_name $TASKNAME --num_tracked_points 8 --keypoints_type 3
+
+# To run things in batch mode
+# bash generate_points_framewise_batch.sh
 
 # Generate dataset (this should be quick)
 cd ../
-python generate_dataset.py --preprocessed_data_dir $PREPROCESSDIR --task_name $TASKNAME --min_length 33 --subsample 3 --framewise_cotracker --unproject_depth
+python generate_dataset.py --preprocessed_data_dir $PREPROCESSDIR --task_name $TASKNAME --min_length 33 --subsample 3 --framewise_cotracker --keypoints_type 3
 
 # Train (YOU NEED TO CHANGE THE HARD-CODED PARAMS IN run_train.sh)
 bash run_train.sh
