@@ -106,23 +106,25 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--preprocessed_data_dir", type=str, required=True, help="path to demo data folder with preprocessed outputs")
     parser.add_argument("--task_name", type=str, required=True, help="name of the task")
-    parser.add_argument("--dimensions", type=int, default=3, help="number of dimensions to use for the object keypoints")
     parser.add_argument("--delta_actions", default=False, action="store_true", help="whether to use delta actions or not")
     parser.add_argument("--min_length", type=int, default=100, help="minimum length of the trajectory")
     parser.add_argument("--framewise_cotracker", default=False, action="store_true", help="whether used frame-wise cotracker or not")
     parser.add_argument("--subsample", type=int, default=3, help="subsample rate for the dataset")
-    parser.add_argument("--unproject_depth", default=False, action="store_true", help="Whether to unproject depth to compute keypoints")
+    parser.add_argument("--keypoints_type", type=float, choices=[2, 2.5, 3], default=3, help="Whether to unproject depth to compute keypoints")
     args = parser.parse_args()
 
     missing_files = 0
     too_short = 0
-    point_type = '3d' if args.unproject_depth else '2.5d'
+
+    if args.keypoints_type != 2.5:
+        args.keypoints_type = int(args.keypoints_type)
+    dimensions = 2 if args.keypoints_type == 2 else 3
 
     dataset = []
     if args.framewise_cotracker:
-        object_keypoints_file = args.preprocessed_data_dir + f"/{args.task_name}_{point_type}_cov3_framewise.pkl"
+        object_keypoints_file = args.preprocessed_data_dir + f"/{args.task_name}_{str(args.keypoints_type)}d_cov3_framewise.pkl"
     else:
-        object_keypoints_file = args.preprocessed_data_dir + f"/{args.task_name}_{point_type}_videowise.pkl"
+        object_keypoints_file = args.preprocessed_data_dir + f"/{args.task_name}_{str(args.keypoints_type)}d_videowise.pkl"
     with open(object_keypoints_file, "rb") as file:
         object_keypoints = pickle.load(file)
     traj_lengths = []
@@ -133,9 +135,9 @@ if __name__ == "__main__":
             missing_files += 1
             continue
         if args.framewise_cotracker:
-            H_O_C_trajectory = get_object_keypoints_in_camera_frame_framewisecotracker(trajectory=object_keypoint_trajectory, use_pixel_keypoints=args.dimensions==2)
+            H_O_C_trajectory = get_object_keypoints_in_camera_frame_framewisecotracker(trajectory=object_keypoint_trajectory, use_pixel_keypoints=dimensions==2)
         else:
-            H_O_C_trajectory = get_object_keypoints_in_camera_frame_videowisecotracker(trajectory=object_keypoint_trajectory, preprocessed_data_dir=hand_trajectory_path, use_pixel_keypoints=args.dimensions==2)
+            H_O_C_trajectory = get_object_keypoints_in_camera_frame_videowisecotracker(trajectory=object_keypoint_trajectory, preprocessed_data_dir=hand_trajectory_path, use_pixel_keypoints=dimensions==2)
         H_F_C_trajectory = get_fingertips_in_camera_frame(preprocessed_data_dir=hand_trajectory_path)
         assert len(H_O_C_trajectory) == len(H_F_C_trajectory)
         traj_lengths.append(len(H_F_C_trajectory))
@@ -164,9 +166,9 @@ if __name__ == "__main__":
     print("Average length of action sequence: ", np.mean([len(demo['actions']) for demo in dataset]))
 
     if args.delta_actions:
-        dataset_name = f"{args.task_name}_{point_type}_delta_actions_minlength{args.min_length}_closed_loop_dataset.pkl"
+        dataset_name = f"{args.task_name}_{str(args.keypoints_type)}d_delta_actions_minlength{args.min_length}_closed_loop_dataset.pkl"
     else:
-        dataset_name = f"{args.task_name}_{point_type}_abs_actions_minlength{args.min_length}_closed_loop_dataset.pkl"
+        dataset_name = f"{args.task_name}_{str(args.keypoints_type)}d_abs_actions_minlength{args.min_length}_closed_loop_dataset.pkl"
 
     with open(args.preprocessed_data_dir + f"/{dataset_name}", "wb") as file: 
         pickle.dump(dataset, file)
@@ -182,7 +184,7 @@ if __name__ == "__main__":
     plt.title("Histogram of Trajectory Lengths")
     plt.savefig(f"dataset_plots/histogram_of_trajectory_lengths.png")
 
-    if args.dimensions == 3:
+    if dimensions == 3:
         colors = ['r', 'g', 'b', 'c']
         for demo_num in range(10):
             fingertips_3d = np.array(dataset[demo_num]['hand_keypoints'])
@@ -207,7 +209,7 @@ if __name__ == "__main__":
             plt.savefig(f"dataset_plots/hand_trajectory_demo_{demo_num}.png")
             print(f"Hand trajectory plot saved to hand_trajectory_demo_{demo_num}.png")
             plt.close()
-    elif args.dimensions == 2:
+    elif dimensions == 2:
         colors = ['r', 'g', 'b', 'c']
         for demo_num in range(10):
             fingertips_2d = np.load(f'/data/hermes/push_donut_franka_20241014_preprocessed/demonstration_{demo_num}/2d_fingertips.npy')
@@ -234,11 +236,11 @@ if __name__ == "__main__":
 
     # Adjust the dataset name to include the Hz information
     if args.delta_actions:
-        old_closed_loop_dataset_name = f'{args.task_name}_{point_type}_delta_actions_minlength{args.min_length}_closed_loop_dataset.pkl'
-        closed_loop_dataset_name = f'{args.task_name}_{point_type}_delta_actions_minlength{args.min_length}_{effective_hz}hz_closed_loop_dataset.pkl'
+        old_closed_loop_dataset_name = f'{args.task_name}_{str(args.keypoints_type)}d_delta_actions_minlength{args.min_length}_closed_loop_dataset.pkl'
+        closed_loop_dataset_name = f'{args.task_name}_{str(args.keypoints_type)}d_delta_actions_minlength{args.min_length}_{effective_hz}hz_closed_loop_dataset.pkl'
     else:
-        old_closed_loop_dataset_name = f'{args.task_name}_{point_type}_abs_actions_minlength{args.min_length}_closed_loop_dataset.pkl'
-        closed_loop_dataset_name = f'{args.task_name}_{point_type}_abs_actions_minlength{args.min_length}_{effective_hz}hz_closed_loop_dataset.pkl'
+        old_closed_loop_dataset_name = f'{args.task_name}_{str(args.keypoints_type)}d_abs_actions_minlength{args.min_length}_closed_loop_dataset.pkl'
+        closed_loop_dataset_name = f'{args.task_name}_{str(args.keypoints_type)}d_abs_actions_minlength{args.min_length}_{effective_hz}hz_closed_loop_dataset.pkl'
     pickle_path = f"{args.preprocessed_data_dir}/{old_closed_loop_dataset_name}"
 
     to_return = {}

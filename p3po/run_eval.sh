@@ -31,7 +31,7 @@ bc_weight="/home/ademi/P3PO/p3po/exp_local/2024.11.05/154107_pick_block_20241103
 
 
 # these probably won't change as much
-unproject_depth=true
+keypoints_type=3
 temporal_agg=true
 point_dimensions=3
 history_len=10
@@ -54,7 +54,7 @@ python train.py \
     eval_only=true \
     load_bc=true \
     temporal_agg=$temporal_agg \
-    unproject_depth=$unproject_depth \
+    keypoints_type=$keypoints_type \
     hydra.run.dir=/tmp/hydra-junk \
     hydra.sweep.dir=/tmp/hydra-junk \
     hydra.launcher.submitit_folder=/tmp/hydra-junk

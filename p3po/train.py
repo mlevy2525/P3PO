@@ -95,11 +95,16 @@ class WorkspaceIL:
                 except yaml.YAMLError as exc:
                     print(exc)
 
+            if self.cfg.dimensions == 3:
+                assert self.cfg.keypoints_type in [2.5, 3]
+            elif self.cfg.dimensions == 2:
+                assert self.cfg.keypoints_type == 2
+
             points_cfg["root_dir"] = self.cfg.root_dir
             points_cfg["dimensions"] = self.cfg.point_dimensions
             points_cfg["task_name"] = self.cfg.p3po_task_name
             points_cfg["num_tracked_points"] = self.cfg.num_tracked_points
-            points_cfg["unproject_depth"] = self.cfg.unproject_depth
+            points_cfg["keypoints_type"] = self.cfg.keypoints_type
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):

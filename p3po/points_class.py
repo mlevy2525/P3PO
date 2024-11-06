@@ -21,7 +21,7 @@ C_X = intrinsics.C_X
 C_Y = intrinsics.C_Y
 
 class PointsClass():
-    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_fingertip_points, num_tracked_points, dimensions, unproject_depth, **kwargs):
+    def __init__(self, root_dir, task_name, device, width, height, image_size_multiplier, ensemble_size, dift_layer, dift_steps, num_fingertip_points, num_tracked_points, dimensions, keypoints_type, **kwargs):
         """
         Initialize the Points Class for finding key points in the episode.
 
@@ -105,7 +105,12 @@ class PointsClass():
         self.dimensions = dimensions
         self.num_tracked_points = num_tracked_points
         self.num_fingertip_points = num_fingertip_points
-        self.unproject_depth = unproject_depth
+        self.keypoints_type = keypoints_type
+        if self.dimensions == 3:
+            assert self.keypoints_type in [2.5, 3]
+        elif self.dimensions == 2:
+            assert self.keypoints_type == 2
+        print(f"keypoints_type={keypoints_type}d!!")
 
     # Image passed in here must be in RGB format
     def add_to_image_list(self, image):
@@ -234,7 +239,7 @@ class PointsClass():
                         depth = 0
 
                     # NOTE: experimenting with concat instead of unproject
-                    if self.unproject_depth:
+                    if self.keypoints_type == 3:
                         x = (self.tracks[0, frame_idx, point][0] - C_X) * depth
                         y = (self.tracks[0, frame_idx, point][1] - C_Y) * depth
                         x /= F_X

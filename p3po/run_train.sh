@@ -21,7 +21,7 @@ num_tracked_points=8
 
 
 # these probably won't change as much
-unproject_depth=true
+keypoints_type=3
 temporal_agg=true
 point_dimensions=3
 history_len=10
@@ -47,4 +47,4 @@ python train.py \
     num_tracked_points=$num_tracked_points \
     dataloader.bc_dataset.gaussian_augmentation_std=$gaussian_augmentation_std \
     temporal_agg=$temporal_agg \
-    unproject_depth=$unproject_depth
+    keypoints_type=$keypoints_type
