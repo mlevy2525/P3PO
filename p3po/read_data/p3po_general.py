@@ -1,4 +1,3 @@
-import cv2
 import random
 import numpy as np
 import pickle as pkl
@@ -6,6 +5,7 @@ from pathlib import Path
 
 import torch
 import torchvision.transforms as transforms
+from scipy.interpolate import interp1d
 from torch.utils.data import IterableDataset
 
 
@@ -13,6 +13,9 @@ class AugmentWithGaussianNoise:
     def __init__(self, mean=0.0, std=0.1):
         self.mean = mean
         self.std = std
+
+    def __repr__(self):
+        return f"GaussianAugmentation(mean={self.mean}, std={self.std})"
 
     def add_gaussian_noise(self, data_array):
         # Generate Gaussian noise
@@ -24,7 +27,38 @@ class AugmentWithGaussianNoise:
     def __call__(self, data_array):
         # Add Gaussian noise directly
         return self.add_gaussian_noise(data_array)
+
+
+class AugmentWithRandDropout:
+    def __init__(self, n_drop=3, p=0.5, interp_mode="nearest"):
+        assert interp_mode in ["nearest", "linear"]
+        self.n_drop = n_drop
+        self.p = p
+        self.interp_mode = interp_mode
+
+    def __call__(self, x):
+        if random.random() > self.p:
+            return x
+
+        N = x.shape[0]
+
+        # sample number of frames to drop, and then sample those number of frames
+        num_to_drop = random.randint(0, self.n_drop)
+        indices_to_drop = np.random.choice(N, size=num_to_drop, replace=False)
+
+        # create mask for interp1d
+        mask = np.ones(N, dtype=bool)
+        mask[indices_to_drop] = False
+        indices_to_keep = np.where(mask)[0]
+        x_keep = x[mask]
+
+        interp_func = interp1d(indices_to_keep, x_keep, kind=self.interp_mode, axis=0, fill_value="extrapolate")
+        return interp_func(np.arange(N))
     
+    def __repr__(self):
+        return f"DropoutAugmentation(n_drop={self.n_drop}, p={self.p}, interp_mode={self.interp_mode})"
+
+
 class BCDataset(IterableDataset):
     def __init__(
         self,
@@ -45,6 +79,7 @@ class BCDataset(IterableDataset):
         store_actions=False,
         gaussian_augmentation_std=0.1,
         delta_actions=False,
+        num_rand_drop_history=0,  # number of frames to drop from history in training
     ):
         self._obs_type = obs_type
         self._prompt = prompt
@@ -54,6 +89,10 @@ class BCDataset(IterableDataset):
         self._intermediate_goal_step = intermediate_goal_step
         self._keys = training_keys
         self._delta_actions = delta_actions
+
+        # randomly drop frames from history
+        assert num_rand_drop_history < history_len
+        self._rand_drop_history = num_rand_drop_history
 
         # temporal aggregation
         self._temporal_agg = temporal_agg
@@ -184,9 +223,15 @@ class BCDataset(IterableDataset):
 
         if gaussian_augmentation_std > 0:
             self.graph_aug = AugmentWithGaussianNoise(std=gaussian_augmentation_std)
-            print(f"Using Gaussian augmentation with std {gaussian_augmentation_std}")
+            print(f"Using {self.graph_aug}")
         else:
             self.graph_aug = lambda x: x
+
+        if num_rand_drop_history > 0:
+            self.hist_aug = AugmentWithRandDropout(n_drop=num_rand_drop_history, p=0.4, interp_mode="nearest")
+            print(f"Using {self.hist_aug}")
+        else:
+            self.hist_aug = lambda x: x
 
         # Samples from envs
         self.envs_till_idx = len(self._episodes)
@@ -250,7 +295,8 @@ class BCDataset(IterableDataset):
         if self._prompt == None or self._prompt == "text":
             sampled_input['actions'] = self.preprocess["actions"](sampled_action)
             sampled_input['task_emb'] = task_emb
-            sampled_input['graph'] = self.graph_aug(sampled_input['graph'])
+            # apply data augmentation here
+            sampled_input['graph'] = self.graph_aug(self.hist_aug(sampled_input['graph']))
             return sampled_input
         elif self._prompt == "goal":
             prompt_episode = self._sample_episode(env_idx)

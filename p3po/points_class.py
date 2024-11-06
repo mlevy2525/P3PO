@@ -11,7 +11,6 @@ import matplotlib.patches as patches
 from utilities.correspondence import Correspondence
 from utilities.depth import Depth
 
-sys.path.append("/home/ademi/hermes")
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS
 from hermes.utils.visualization import draw_point
 intrinsics = CAM_TO_INTRINSICS['realsense-239122072252']
@@ -256,7 +255,7 @@ class PointsClass():
 
         return final_points.reshape(last_n_frames, -1)
 
-    def plot_image(self, last_n_frames=1, finger_poses=None, finger_color=(0, 255, 0)):
+    def plot_image(self, last_n_frames=1, finger_poses=None, finger_color=(0, 255, 0), ik_poses=None, ik_color=(0, 0, 255), pred_poses=None, pred_color=(255, 0, 0)):
         """
         Plot the image with the key points overlaid on top of it. Running this will slow down your tracking, but it's good for debugging.
 
@@ -279,8 +278,14 @@ class PointsClass():
             if finger_poses is not None:
                 for pose in finger_poses:
                     curr_image = draw_point(curr_image, pose=pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=finger_color)
+            if pred_poses is not None:
+                for pose in pred_poses:
+                    curr_image = draw_point(curr_image, pose=pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=pred_color)
+            if ik_poses is not None:
+                for pose in ik_poses:
+                    curr_image = draw_point(curr_image, pose=pose, intrinsics=CAM_TO_INTRINSICS['realsense-239122072252'], radius=5, color=ik_color)
 
-            fig, ax = plt.subplots(1)
+            fig, ax = plt.subplots(1, figsize=(12, 8))
             ax.imshow(curr_image.astype(np.uint8))
 
             rainbow = plt.get_cmap('rainbow')

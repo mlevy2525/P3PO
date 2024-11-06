@@ -10,7 +10,7 @@ device: "cuda"
 
 width: -1
 height: -1
-image_size_multiplier: 1
+image_size_multiplier: 0.5
 
 ensemble_size: 8
 dift_layer: 1

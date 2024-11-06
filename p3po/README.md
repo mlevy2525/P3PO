@@ -5,10 +5,7 @@ After running all the preprocessing commands in `hermes`, continue preprocessing
 cd p3po/
 
 # Set the following variables
-export PREPROCESSDIR="/home/ademi/hermes/data/open_microwave_20241106a_preprocessed_30hz"
-export TASKNAME="open_microwave_20241106a_30hz"
-# export PREPROCESSDIR="/home/ademi/hermes/data/open_drawer_20241103b_preprocessed_30hz"
-# export TASKNAME="open_drawer_20241103b_30hz"
+export TASKNAME="collect_ball_20241106c"
 
 # In the first cell, modify the following variables:
 #   - path: to point to a segmented mp4 video in the preprocessed folder for a single demonstration
@@ -18,15 +15,18 @@ ipython label_points.ipynb
 
 # Run cotracker on the entire dataset (this will take about 1 min/iter)
 cd data_generation/
-python generate_points_framewise.py --preprocessed_data_dir $PREPROCESSDIR --task_name $TASKNAME --num_tracked_points 8 --keypoints_type 3
+python generate_points_framewise.py --preprocessed_data_dir "/home/ademi/hermes/data/${TASKNAME}_preprocessed" --task_name $TASKNAME --num_tracked_points 8 --keypoints_type 3
 
 # To run things in batch mode
-# bash generate_points_framewise_batch.sh
+# bash batch_generate_train_dataset.sh
 
 # Generate dataset (this should be quick)
 cd ../
-python generate_dataset.py --preprocessed_data_dir $PREPROCESSDIR --task_name $TASKNAME --min_length 33 --subsample 3 --framewise_cotracker --keypoints_type 3
+python generate_dataset.py --preprocessed_data_dir "/home/ademi/hermes/data/${TASKNAME}_preprocessed" --task_name $TASKNAME --history_length 10 --subsample 3 --framewise_cotracker --delta_actions --keypoints_type 3
 
 # Train (YOU NEED TO CHANGE THE HARD-CODED PARAMS IN run_train.sh)
 bash run_train.sh
+
+# To run things in batch mode
+# bash batch_run_train.sh
 ```

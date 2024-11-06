@@ -517,7 +517,7 @@ class BCAgent:
             self.actor.parameters(), lr=self.lr, weight_decay=1e-4
         )
 
-    def act(self, obs, prompt, norm_stats, step, global_step, eval_mode=False, use_spatial_queue=False, spatial_eps=0.01):
+    def act(self, obs, prompt, norm_stats, step, global_step, eval_mode=False, use_spatial_queue=False, spatial_eps=0.005):
         if norm_stats is not None:
             pre_process = lambda s_qpos: (
                 s_qpos - norm_stats[self.proprio_key]["min"]
@@ -555,14 +555,13 @@ class BCAgent:
                 to_append = obs[key]
 
             if use_spatial_queue:
-                print(to_append.shape)
-                last_queue_state = self.observation_buffer[key][-1]
-                num_points = to_append.reshape(-1).shape[0] // 3
-                distance_to_last_state = np.linalg.norm(to_append - last_queue_state) / num_points
-                if distance_to_last_state > spatial_eps:
+                last_fingertips = self.observation_buffer[key][-1][-12:]
+                fingertips = to_append.reshape(-1)[-12:]
+                distance_to_last_fingertips = np.linalg.norm(fingertips - last_fingertips) / 4
+                if distance_to_last_fingertips > spatial_eps:
                     self.observation_buffer[key].append(to_append.numpy())
                 else:
-                    print(f"did not queue this state. average distance to last state was {distance_to_last_state.item()}")
+                    print(f"did not queue this state. average distance to last state was {distance_to_last_fingertips.item()}")
             else:
                 self.observation_buffer[key].append(to_append.numpy())
             to_input = torch.as_tensor(

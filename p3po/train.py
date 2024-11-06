@@ -95,9 +95,9 @@ class WorkspaceIL:
                 except yaml.YAMLError as exc:
                     print(exc)
 
-            if self.cfg.dimensions == 3:
+            if self.cfg.point_dimensions == 3:
                 assert self.cfg.keypoints_type in [2.5, 3]
-            elif self.cfg.dimensions == 2:
+            elif self.cfg.point_dimensions == 2:
                 assert self.cfg.keypoints_type == 2
 
             points_cfg["root_dir"] = self.cfg.root_dir
@@ -162,10 +162,6 @@ class WorkspaceIL:
         return self.global_step * self.cfg.suite.action_repeat
 
     def eval(self):
-        use_residual_setpoints = False
-        alpha = 1.0
-        print(f"{use_residual_setpoints=} {alpha=}")
-
         self.agent.train(False)
         episode_rewards = []
         successes = []
@@ -239,17 +235,12 @@ class WorkspaceIL:
                                 self.global_step,
                                 eval_mode=True,
                             )
-                            if use_residual_setpoints:
-                                action = action + alpha * residual
                     if self.open_loop: 
                         ol_step += 1
                     time_step = self.env[env_idx].step(action)
                     self.video_recorder.record(self.env[env_idx])
                     total_reward += time_step.reward
                     step += 1
-
-                    residual = (time_step.observation["fingertips"] - action)
-                    # print(f"execution residual per fingertip: [{np.linalg.norm(residual[0:3]).item():.4f}, {np.linalg.norm(residual[3:6]).item():.4f}, {np.linalg.norm(residual[6:9]).item():.4f}, {np.linalg.norm(residual[9:12]).item():.4f}]")
 
                 episode += 1
                 success.append(time_step.observation["goal_achieved"])

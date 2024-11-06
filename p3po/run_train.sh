@@ -1,32 +1,39 @@
 #!/bin/bash
+#
+# Usage:
+# bash run_train.sh $task $num_tracked_points $hz
 
-
-export CUDA_VISIBLE_DEVICES=0
 export HYDRA_FULL_ERROR=1
 
-
-# pick_block_20241103a
-# --------
-p3po_task_name="pick_block_20241103a_30hz_nooccpoints"
-run_name="pick_block_20241103a_30hz_nooccpoints_3d_abs_actions_minlength33_10hz"
-task="pick_block_20241103a_30hz_nooccpoints_3d_abs_actions_minlength33_10hz_closed_loop_dataset"
-num_tracked_points=8
-
-# open_drawer_20241103b
-# --------
-# p3po_task_name="open_drawer_20241103b_30hz"
-# run_name="open_drawer_20241103b_30hz_3d_abs_actions_minlength33_10hz"
-# task="open_drawer_20241103b_30hz_3d_abs_actions_minlength33_10hz_closed_loop_dataset"
-# num_tracked_points=29
+# ARGS:
+task=$1
+num_tracked_points=$2
+hz=$3
 
 
-# these probably won't change as much
+if [[ $hz == 10 ]]; then
+    minlength=34
+elif [[ $hz == 15 ]]; then
+    minlength=23
+elif [[ $hz == 30 ]]; then
+    minlength=12
+else
+    echo "hz=$hz not supported! exiting ..."
+    exit
+fi
+
+
+p3po_task_name=$task
+run_name="${task}_3d_abs_actions_minlength${minlength}_${hz}hz"
+task="${task}_3d_abs_actions_minlength${minlength}_${hz}hz_closed_loop_dataset"
+
 keypoints_type=3
-temporal_agg=true
 point_dimensions=3
+temporal_agg=true
 history_len=10
-gaussian_augmentation_std=0.1
-num_train_steps=150010
+gaussian_augmentation_std=0.02
+num_rand_drop_history=3
+num_train_steps=200010
 save_every_steps=5000
 delta_actions=false
 
@@ -47,6 +54,7 @@ python train.py \
     p3po_task_name=$p3po_task_name \
     num_tracked_points=$num_tracked_points \
     dataloader.bc_dataset.gaussian_augmentation_std=$gaussian_augmentation_std \
+    dataloader.bc_dataset.num_rand_drop_history=$num_rand_drop_history \
     temporal_agg=$temporal_agg \
     keypoints_type=$keypoints_type \
-    delta_actions=$delta_actions 
+    delta_actions=$delta_actions

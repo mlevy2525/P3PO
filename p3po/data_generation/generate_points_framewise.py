@@ -16,7 +16,9 @@ from tqdm import tqdm
 sys.path.append('../')
 from points_class import PointsClass
 
-OUT_FOLDER = "outputs/"
+CAM_ID = 0
+LOG_FOLDER = "outputs/"
+COORDS_FOLDER = "../../coordinates"
 
 
 if __name__ == "__main__":
@@ -51,13 +53,13 @@ if __name__ == "__main__":
 
     print(f'using preprocessed_data_dir={preprocessed_data_dir}, cfg={cfg}')
 
-    coords = pickle.load(open(f'../../coordinates/coords/{task_name}.pkl', 'rb'))
+    coords = pickle.load(open(os.path.join(COORDS_FOLDER, "coords", f"{task_name}.pkl"), 'rb'))
     if len(coords) != num_tracked_points:
         raise RuntimeError('Number of points found in PKL does not match the number specified !!')
 
     points_class = PointsClass(**cfg)
 
-    out_dir = os.path.join(OUT_FOLDER, f'{task_name}_{str(keypoints_type)}d')
+    out_dir = os.path.join(LOG_FOLDER, f'{task_name}_{str(keypoints_type)}d')
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
     os.makedirs(out_dir, exist_ok=True)
@@ -73,13 +75,14 @@ if __name__ == "__main__":
             directory = f"demonstration_{demo_id}"
             pbar.set_postfix({'directory': directory})
 
-            path = f'{preprocessed_data_dir}/{directory}/cam_3_rgb_images'
-            depth_path = f'{preprocessed_data_dir}/{directory}/cam_3_depth.h5'
+            path = os.path.join(preprocessed_data_dir, directory, f"cam_{CAM_ID}_rgb_images")
+            depth_path = os.path.join(preprocessed_data_dir, directory, f"cam_{CAM_ID}_depth.h5")
 
             try:
-                image_indices = pickle.load(open(f'{preprocessed_data_dir}/{directory}/image_indices_cam_3.pkl', 'rb'))
+                with open(os.path.join(preprocessed_data_dir, directory, f"image_indices_cam_{CAM_ID}.pkl"), "rb") as f:
+                    image_indices = pickle.load(f)
                 image_indices = [entry[1] for entry in image_indices]
-                images = [np.array(Image.open(f'{path}/frame_{str(file_num).zfill(5)}.png')) for file_num in image_indices]
+                images = [np.array(Image.open(os.path.join(path, f"frame_{file_num:05d}.png"))) for file_num in image_indices]
             except:
                 print(f"Failed to load images from {path}")
                 continue
@@ -87,9 +90,10 @@ if __name__ == "__main__":
                 depth_dataset = h5_file['depth_images']
                 depth_images = [depth_dataset[idx] for idx in image_indices]
 
-            if os.path.exists(f'{out_dir}/{directory}'):
-                shutil.rmtree(f'{out_dir}/{directory}')
-            os.makedirs(f'{out_dir}/{directory}')
+            save_dir = os.path.join(out_dir, directory)
+            if os.path.exists(save_dir):
+                shutil.rmtree(save_dir)
+            os.makedirs(save_dir)
 
             graphs = []
             frames = []
@@ -115,14 +119,14 @@ if __name__ == "__main__":
                 if save_images:
                     image = points_class.plot_image()[-1]
                     frames.append(image)
-                    cv2.imwrite(f'{out_dir}/{directory}/{task_name}_{idx}.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+                    cv2.imwrite(os.path.join(save_dir, f"{task_name}_{idx}.png"), cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
             if len(frames) > 0:
-                iio.imwrite(f'{out_dir}/{directory}_{task_name}.gif', frames, duration=3, format='gif', loop=0)
+                iio.imwrite(os.path.join(out_dir, f"{directory}_{task_name}.gif"), frames, duration=3, format='gif', loop=0)
             trajectories[directory.split('_')[-1]] = graphs
             pbar.update(1)
 
-    file_path = f'{preprocessed_data_dir}/{task_name}_{str(keypoints_type)}d_cov3_framewise.pkl'
+    file_path = os.path.join(preprocessed_data_dir, f"{task_name}_{str(keypoints_type)}d-keypoints.pkl")
     with open(str(file_path), 'wb') as f:
         pickle.dump(trajectories, f)
     print(f"Saved points to {file_path}")

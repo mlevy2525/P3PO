@@ -2,18 +2,16 @@
 
 import cv2
 import numpy as np
-import torchvision.transforms as T
 from PIL import Image
 from scipy.spatial.transform import Rotation
 from gymnasium import spaces
 import os
 import pickle
 import h5py
-import sys
-sys.path.append("/home/ademi/hermes")
+
 from hermes.environments.base import BaseDexterousArmEnv
 from hermes.pose_estimation_ar.constants import CAM_TO_INTRINSICS, MARKER_LENGTH
-from hermes.utils.real_constants import ALLEGRO_HOME, FRANKA_HOME_CARTESIAN, KINOVA_HOME_CARTESIAN, H_I_F
+from hermes.utils.real_constants import FRANKA_HOME_CARTESIAN, KINOVA_HOME_CARTESIAN, H_I_F
 from hermes.inverse_kinematics.allegro_with_arm_sgd_ik_solver import FingertipArmIKSolverSGD
 from hermes.calibration.calibrate_base import CalibrateBase
 from hermes.replayers.hermes_real import convert_Tpose_to_7dof, map_ik_allegro_mount_to_franka_cartesian_pose
@@ -23,7 +21,7 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
 
     CAM_HOST = "172.24.71.240"
     CAM_PORT = 10005
-    CAM_ID = 3
+    CAM_ID = 0
     CAM_TYPE = "realsense-239122072252"
     CAM_INTRINSICS = CAM_TO_INTRINSICS[CAM_TYPE]
     MARKER_SIZE = MARKER_LENGTH
@@ -176,9 +174,9 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         desired_franka_cart = np.concatenate([desired_tvec, desired_quat], axis=0)
 
         print(f"CURRENT ARM POSE: {self.arm.get_cartesian_position()}")
-        print(f"RESETTING ARM TO: {desired_franka_cart}")
         self.arm.move_coords(desired_franka_cart, duration=10)
         self.hand.home()
+        print(f"RESETTING ARM TO: {desired_franka_cart}")
         return self.get_state()
 
     def get_state(self):

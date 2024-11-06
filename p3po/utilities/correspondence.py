@@ -107,8 +107,7 @@ class Correspondence():
 
                 src_vec = torch.nn.functional.normalize(src_vec) # 1, C
                 trg_vec = torch.nn.functional.normalize(trg_vec) # N, C, HW
-                # NOTE: CASTING TO CPU OP BC OF GPU RAM OOM. WILL INCUR SLOWDOWN
-                cos_map = torch.matmul(src_vec.cpu(), trg_vec.cpu()).view(1, self.height, self.width).numpy()
+                cos_map = torch.matmul(src_vec, trg_vec).view(1, self.height, self.width).cpu().numpy()
 
                 max_yx = np.unravel_index(cos_map[0].argmax(), cos_map[0].shape)
                 out_coords[idx,1], out_coords[idx,2] = int(max_yx[1] * curr_image_shape[0]/self.width), int(max_yx[0] * curr_image_shape[1]/self.height)

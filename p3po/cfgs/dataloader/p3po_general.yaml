@@ -15,4 +15,5 @@ bc_dataset:
   img_size: 84
   store_actions: true
   gaussian_augmentation_std: 0
+  num_rand_drop_history: 0
   delta_actions: ${delta_actions}
