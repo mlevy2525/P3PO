@@ -181,3 +181,6 @@ processed_data/graphs/*
 expert_demos/metaworld/*
 p3po/data_generation/*_framewise/
 dataset_plots/
+outputs/
+eval_dump/
+*.mp4

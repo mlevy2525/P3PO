@@ -268,14 +268,14 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
             H_F_C[:3, 3] = target_fingertip_in_camera
             H_F_B = np.linalg.pinv(self.H_B_C) @ H_F_C
             # H_F_B[:3,3] += [0.025, 0.025, 0.02]
-            H_F_B[:3,3] += [0, 0, 0.02]
+            # H_F_B[:3,3] += [0, 0.01, 0.00]
             H_F_Bs.append(H_F_B)
-        H_F_Bs = np.stack(H_F_Bs, axis=0)   
+        H_F_Bs = np.stack(H_F_Bs, axis=0)
 
         # use ik to get target joint positions corresponding to target fingertips
         target_joint_positions, _ = self.ik_solver.inverse_kinematics(
             H_F_Bs, self.get_joint_positions(), threshold=1e-3, learning_rate=1e-2,
-            finger_arm_weight=100, max_iterations=500, max_grad_norm=1,
+            finger_arm_weight=100, max_iterations=500, max_grad_norm=2,
         )
 
         # move the arm to target eef pose corresponding to target joint positions
@@ -288,18 +288,10 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         arm_pose = np.concatenate(
             [H_E_F[:3, 3], Rotation.from_matrix(H_E_F[:3,:3]).as_quat()], axis=0
         )
-        # print(f'Arm Pose from H_E_I: {arm_pose_from_ik}')
-        # print(f'Arm Pose from H_E_F: {arm_pose}')
         action = np.concatenate([arm_pose, target_joint_positions[self.num_arm_joints:]], axis=0)
-        # input("Press Enter to take an action...")
         obs = self.step_control(action)
 
         obs['ik_fingertips'] = self.get_any_fingertips_in_camera(target_joint_positions) 
-
-        # target_fingertips_in_camera = self.get_any_fingertips_in_camera(target_joint_positions)
-        # actual_fingertips_in_camera = obs["fingertips"]
-        # residual = target_fingertips_in_camera - actual_fingertips_in_camera
-        # print(f"execution residual per fingertip: [{np.linalg.norm(residual[0:3]).item():.4f}, {np.linalg.norm(residual[3:6]).item():.4f}, {np.linalg.norm(residual[6:9]).item():.4f}, {np.linalg.norm(residual[9:12]).item():.4f}]")
 
         return obs, 0, 0, {}
 
@@ -309,12 +301,10 @@ class DexterousRealArmEnv(BaseDexterousArmEnv):
         ), "Action given should be 22 dimensional action space with kinova actions at first"
 
         if self.arm is not None:
-            self.arm.arm_control(action[:7])
-            print("moved arm")
+            self.arm.move_coords(action[:7], duration=1)
 
         if self.hand is not None:
             self.hand.move(action[7:])
-            print("moved hand")
 
         return self.get_state()
     
