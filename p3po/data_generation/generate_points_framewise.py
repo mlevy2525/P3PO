@@ -87,8 +87,15 @@ if __name__ == "__main__":
                 print(f"Failed to load images from {path}")
                 continue
             with h5py.File(depth_path, 'r') as h5_file:
-                depth_dataset = h5_file['depth_images']
-                depth_images = [depth_dataset[idx] for idx in image_indices]
+                depth_dataset = h5_file['depth_images'][:]
+                depth_images =[]
+                for idx in image_indices:
+                    # For teleoperation dataset. May have extra images 
+                    try:
+                        depth_images.append(depth_dataset[idx])
+                    except IndexError:
+                        print(f'{idx} out of range. Total depth_dataset length: {len(depth_dataset)} in demo {demo_id}')
+                        depth_images.append(depth_dataset[-1]) # append the last depth. Usually only 1 extra image than depth_dataset
 
             save_dir = os.path.join(out_dir, directory)
             if os.path.exists(save_dir):
@@ -108,7 +115,7 @@ if __name__ == "__main__":
                 points_class.track_points()
 
                 if gt_depth:
-                    depth_image = depth_images[0] / 1000
+                    depth_image = depth_images[idx] / 1000
                     points_class.set_depth(depth_image)
                 else:
                     points_class.get_depth()
