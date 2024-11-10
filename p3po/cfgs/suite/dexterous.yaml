@@ -50,3 +50,4 @@ task_make_fn:
   eval: ${eval} # eval true mean use robot
   raw_data_path: ${raw_data_path}
   delta_actions: ${delta_actions}
+  joint_space_control: ${joint_space_control}

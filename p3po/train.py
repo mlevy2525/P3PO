@@ -108,7 +108,7 @@ class WorkspaceIL:
 
             points_class = PointsClass(**points_cfg)
             for i in range(len(self.env)):
-                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class, closed_loop_dataset_path=dataset_iterable._paths[0])
+                self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class, closed_loop_dataset_path=dataset_iterable._paths[0], joint_space_control=self.cfg.joint_space_control)
 
 
         # create agent

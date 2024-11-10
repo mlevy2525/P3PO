@@ -404,6 +404,7 @@ def make(
     eval,  # True means use_robot=True
     raw_data_path,
     delta_actions,
+    joint_space_control,
 ):
     # env = gym.make(
     #     "Dexterous-v1",
@@ -418,6 +419,7 @@ def make(
         use_robot=eval,
         raw_data_path=raw_data_path,
         delta_actions=delta_actions,
+        joint_space_control=joint_space_control,
     )
 
     # apply wrappers
