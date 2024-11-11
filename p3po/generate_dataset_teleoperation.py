@@ -15,6 +15,13 @@ def _load_files(demo_path):
     with open(image_indices_path, "rb") as file:
         image_indices = pickle.load(file)
 
+    allegro_commanded_indices_path = allegro_indices_path = os.path.join(
+        demo_path, 'allegro_commanded_joint_states.pkl'
+    )
+    franka_commanded_indices_path = os.path.join(
+        demo_path, 'franka_cartesian_states.pkl'
+    )
+
     allegro_indices_path = os.path.join(
         demo_path, 'allegro_joint_states.pkl'
     )
@@ -24,27 +31,46 @@ def _load_files(demo_path):
     allegro_path = os.path.join(
         demo_path, 'allegro_joint_states.h5'
     )
+    allegro_commanded_path = allegro_indices_path = os.path.join(
+        demo_path, 'allegro_commanded_joint_states.h5'
+    )
     franka_path = os.path.join(
         demo_path, 'franka_joint_states.h5'
     )
+
+    franka_commanded_path = os.path.join(
+        demo_path, 'franka_cartesian_states.h5'
+    )
+
     with open(allegro_indices_path, 'rb') as file: 
         allegro_indices = pickle.load(file)
     
     with open(franka_indices_path, 'rb') as file: 
         franka_indices = pickle.load(file)
 
+    with open(allegro_commanded_indices_path,'rb') as file:
+        allegro_commanded_indices = pickle.load(file)
+
+    with open(franka_commanded_indices_path, 'rb') as file: 
+        franka_commanded_indices = pickle.load(file)
+
     with h5py.File(allegro_path, "r") as file:
         allegro_position = np.asarray(file['positions'])
 
     with h5py.File(franka_path, "r") as file:
         franka_position = np.asarray(file['positions'])
+    
+    with h5py.File(allegro_commanded_path, "r") as file:
+        allegro_commanded_position = np.asarray(file['positions'])
 
+    with h5py.File(franka_commanded_path, "r") as file:
+        franka_commanded_position = np.asarray(file['positions'])
     # Load the aruco
     aruco_pose_path = os.path.join(demo_path, 'aruco_postprocessed.npz')
     aruco_poses = np.load(aruco_pose_path)
-    return image_indices, allegro_position, allegro_indices,franka_position,franka_indices,aruco_poses
+    return image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position,aruco_poses
 
-
+'''
 def get_fingertips_in_camera_frame(preprocessed_data_dir):
     image_indices, fingertips_wrt_world, hand_pose_indices, aruco_poses = _load_files(preprocessed_data_dir)
     hand_trajectory = []
@@ -71,22 +97,28 @@ def get_fingertips_in_camera_frame(preprocessed_data_dir):
         H_F_Cs = np.stack(H_F_Cs, axis=0)
         hand_trajectory.append(H_F_Cs)
     return hand_trajectory
-
+'''
 def get_allegrofranka_in_camera_frame(preprocessed_data_dir):
-    image_indices, allegro_position, allegro_indices,franka_position,franka_indices,aruco_poses = _load_files(preprocessed_data_dir)
+    image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position,aruco_poses = _load_files(preprocessed_data_dir)
     allegro_franka = []
+    commanded_allegro_franka =[]
     for data_id in range(len(image_indices)):
         _, image_frame_id = image_indices[data_id]
         aruco_id = image_frame_id - aruco_poses['indices'][0]
         _, franka_id = franka_indices[data_id]
         _,allegro_id= allegro_indices[data_id]
+        _, franka_commanded_id = franka_commanded_indices[data_id]
+        _,allegro_commanded_id= allegro_commanded_indices[data_id]
         franka = franka_position[franka_id]
         allegro = allegro_position[allegro_id]
+        franka_c = franka_commanded_position[franka_commanded_id]
+        allegro_c = allegro_commanded_position[allegro_commanded_id]
         allegro_franka.append(np.concatenate((allegro,franka))) # (23,) allegro (16,) franka(7,)
-    return allegro_franka
+        commanded_allegro_franka.append(np.concatenate((allegro_c,franka_c))) # (19,) allegro(16,) franka(3,) cartesian
+    return allegro_franka,commanded_allegro_franka
 
 def get_object_keypoints_in_camera_frame_videowisecotracker(trajectory, preprocessed_data_dir, use_pixel_keypoints):
-    image_indices, _, _, _,_,_ = _load_files(preprocessed_data_dir)
+    image_indices, _, _, _,_,_,_,_,_,_ = _load_files(preprocessed_data_dir)
     ''' assumes origin is top left of the image with r left to right and c top to bottom'''
     trajectory_camera_coords = []
     
@@ -167,7 +199,7 @@ if __name__ == "__main__":
             H_O_C_trajectory = get_object_keypoints_in_camera_frame_framewisecotracker(trajectory=object_keypoint_trajectory, use_pixel_keypoints=dimensions==2)
         else:
             H_O_C_trajectory = get_object_keypoints_in_camera_frame_videowisecotracker(trajectory=object_keypoint_trajectory, preprocessed_data_dir=allegrofranka_path, use_pixel_keypoints=dimensions==2)
-        allegrofranka = get_allegrofranka_in_camera_frame(preprocessed_data_dir=allegrofranka_path)
+        allegrofranka,commanded_allegrofranka = get_allegrofranka_in_camera_frame(preprocessed_data_dir=allegrofranka_path)
         assert len(H_O_C_trajectory) == len(allegrofranka)
         traj_lengths.append(len(allegrofranka))
 
@@ -175,14 +207,14 @@ if __name__ == "__main__":
             print(f"Skipping {allegrofranka_path} because it has less than {args.min_length} frames")
             too_short += 1
             continue
-        demonstration = {'object_keypoints': H_O_C_trajectory, 'allegro_franka': allegrofranka, 'demo_num': demo_num}
+        demonstration = {'object_keypoints': H_O_C_trajectory, 'allegro_franka': allegrofranka, 'human_commanded':commanded_allegrofranka,'demo_num': demo_num}
         dataset.append(demonstration)
 
     for demo in dataset:
         if args.delta_actions:
-            demo['actions'] = [demo['allegro_franka'][i+1] - demo['allegro_franka'][i] for i in range(len(demo['allegro_franka'])-1)]
+            demo['actions'] = [demo['human_commanded'][i+1] - demo['human_commanded'][i] for i in range(len(demo['human_commanded'])-1)]
         else:
-            demo['actions'] = [demo['allegro_franka'][i+1] for i in range(len(demo['allegro_franka'])-1)]
+            demo['actions'] = [demo['human_commanded'][i+1] for i in range(len(demo['human_commanded'])-1)]
 
     dataset = sorted(dataset, key=lambda x: x['demo_num'])
 
@@ -193,7 +225,7 @@ if __name__ == "__main__":
     print(f"Shape of the allegrofranka joint angles: {dataset[0]['allegro_franka'][0].shape}")
     print(f"Shape of the actions: {dataset[0]['actions'][0].shape}")
     print("Average length of object keypoint demonstrations: ", np.mean([len(demo['object_keypoints']) for demo in dataset]))
-    print("Average length of hand keypoint demonstrations: ", np.mean([len(demo['allegro_franka']) for demo in dataset]))
+    print("Average length of allegrofranka joint demonstrations: ", np.mean([len(demo['allegro_franka']) for demo in dataset]))
     print("Average length of action sequence: ", np.mean([len(demo['actions']) for demo in dataset]))
 
     dataset_name = f"{args.task_name}_{str(args.keypoints_type)}d_{args.action_type}_actions_minlength{args.min_length}_closed_loop_dataset.pkl"
