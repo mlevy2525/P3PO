@@ -227,8 +227,8 @@ if __name__ == "__main__":
     print("Average length of object keypoint demonstrations: ", np.mean([len(demo['object_keypoints']) for demo in dataset]))
     print("Average length of allegrofranka joint demonstrations: ", np.mean([len(demo['allegro_franka']) for demo in dataset]))
     print("Average length of action sequence: ", np.mean([len(demo['actions']) for demo in dataset]))
-
-    dataset_name = f"{args.task_name}_{str(args.keypoints_type)}d_{args.action_type}_actions_minlength{args.min_length}_closed_loop_dataset.pkl"
+    effective_hz = 30 // args.subsample
+    dataset_name = f'{args.task_name}_{str(args.keypoints_type)}d_{args.action_type}_actions_minlength{args.min_length}_{effective_hz}hz_closed_loop_dataset.pkl'
     dataset_path = os.path.join(args.preprocessed_data_dir, dataset_name)
     with open(dataset_path, "wb") as file:
         pickle.dump(dataset, file)
