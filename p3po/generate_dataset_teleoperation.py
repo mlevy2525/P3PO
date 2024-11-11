@@ -31,7 +31,7 @@ def _load_files(demo_path):
     allegro_path = os.path.join(
         demo_path, 'allegro_joint_states.h5'
     )
-    allegro_commanded_path = allegro_indices_path = os.path.join(
+    allegro_commanded_path = os.path.join(
         demo_path, 'allegro_commanded_joint_states.h5'
     )
     franka_path = os.path.join(
@@ -66,9 +66,9 @@ def _load_files(demo_path):
     with h5py.File(franka_commanded_path, "r") as file:
         franka_commanded_position = np.asarray(file['positions'])
     # Load the aruco
-    aruco_pose_path = os.path.join(demo_path, 'aruco_postprocessed.npz')
-    aruco_poses = np.load(aruco_pose_path)
-    return image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position,aruco_poses
+    #aruco_pose_path = os.path.join(demo_path, 'aruco_postprocessed.npz')
+    #aruco_poses = np.load(aruco_pose_path)
+    return image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position
 
 '''
 def get_fingertips_in_camera_frame(preprocessed_data_dir):
@@ -99,12 +99,12 @@ def get_fingertips_in_camera_frame(preprocessed_data_dir):
     return hand_trajectory
 '''
 def get_allegrofranka_in_camera_frame(preprocessed_data_dir):
-    image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position,aruco_poses = _load_files(preprocessed_data_dir)
+    image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position = _load_files(preprocessed_data_dir)
     allegro_franka = []
     commanded_allegro_franka =[]
     for data_id in range(len(image_indices)):
         _, image_frame_id = image_indices[data_id]
-        aruco_id = image_frame_id - aruco_poses['indices'][0]
+        #aruco_id = image_frame_id - aruco_poses['indices'][0]
         _, franka_id = franka_indices[data_id]
         _,allegro_id= allegro_indices[data_id]
         _, franka_commanded_id = franka_commanded_indices[data_id]
@@ -118,7 +118,7 @@ def get_allegrofranka_in_camera_frame(preprocessed_data_dir):
     return allegro_franka,commanded_allegro_franka
 
 def get_object_keypoints_in_camera_frame_videowisecotracker(trajectory, preprocessed_data_dir, use_pixel_keypoints):
-    image_indices, _, _, _,_,_,_,_,_,_ = _load_files(preprocessed_data_dir)
+    image_indices, _, _, _,_,_,_,_,_ = _load_files(preprocessed_data_dir)
     ''' assumes origin is top left of the image with r left to right and c top to bottom'''
     trajectory_camera_coords = []
     
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
     if dimensions == 3:
         colors = ['r', 'g', 'b', 'c']
-        for demo_num in range(10):
+        for demo_num in range(len(dataset)):
             #fingertips_3d = np.array(dataset[demo_num]['hand_keypoints'])
             object_keypoints_3d = dataset[demo_num]['object_keypoints']
             fig = plt.figure()
