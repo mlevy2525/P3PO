@@ -87,6 +87,8 @@ class RobotEnv(gym.Env):
                 "gripper": action[-1:],
             }
         }
+        
+        # import ipdb; ipdb.set_trace()
 
         # send action
         self.action_request_socket.send(pickle.dumps(action_dict, protocol=-1))
@@ -111,6 +113,16 @@ class RobotEnv(gym.Env):
         obs = {}
         obs["features"] = np.array(robot_state, dtype=np.float32)
         for idx, image in enumerate(image_list):
+            print("----------------------------------------------------------------------------------------------------current idx is: ", idx)
+            # if idx == 0:
+            #     #Crop for Mara things
+            #     shape = image.shape
+            #     print("shape: ", shape)
+            #     image = image[(shape[0] - int(shape[0] * (1 - .25))) : , (shape[1] - int(shape[1] * (1 - .3))) : ]
+            # if idx == 1:
+            #     #Crop for Mara things
+            #     shape = image.shape
+            #     image = image[(shape[0] - int(shape[0] * (1 - .23))) : , shape[1] - (int(shape[1] * (1 - .23))) : ]
             obs[f"pixels{idx}"] = cv2.resize(image, (self.width, self.height))
 
         return obs, self.reward, False, None
@@ -146,6 +158,16 @@ class RobotEnv(gym.Env):
             obs = {}
             obs["features"] = robot_state
             for idx, image in enumerate(image_list):
+                print("----------------------------------------------------------------------------------------------------current idx is: ", idx)
+                # if idx == 0:
+                #     #Crop for Mara things
+                #     shape = image.shape
+                #     print("shape: ", shape)
+                #     image = image[(shape[0] - int(shape[0] * (1 - .25))) : , (shape[1] - int(shape[1] * (1 - .3))) : ]
+                # if idx == 1:
+                #     #Crop for Mara things
+                #     shape = image.shape
+                #     image = image[(shape[0] - int(shape[0] * (1 - .23))) : , shape[1] - (int(shape[1] * (1 - .23))) : ]
                 obs[f"pixels{idx}"] = cv2.resize(image, (self.width, self.height))
 
             return obs

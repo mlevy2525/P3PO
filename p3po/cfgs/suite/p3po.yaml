@@ -4,7 +4,7 @@ defaults:
 
 root_dir: /mnt/robotlab/siddhant/P3PO
 
-task_name: "pick_plate_from_rack"
+task_name: 'pick_white_plate_cam2' #'0902_pickmug_anything' #'11_05_pick_white_plate_anything' #'pick_white_plate_cam1' #"pick_plate_from_rack"
 device: "cuda"
 
 width: -1
@@ -15,4 +15,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: 24
+num_points: 20 #10
