@@ -64,7 +64,9 @@ def _load_files(demo_path):
         allegro_commanded_position = np.asarray(file['positions'])
 
     with h5py.File(franka_commanded_path, "r") as file:
-        franka_commanded_position = np.asarray(file['positions'])
+        position = np.asarray(file['positions'])
+        orientation = np.asarray(file['orientations'])
+        franka_commanded_position = np.concatenate((position, orientation), axis=1)
     # Load the aruco
     #aruco_pose_path = os.path.join(demo_path, 'aruco_postprocessed.npz')
     #aruco_poses = np.load(aruco_pose_path)
@@ -114,7 +116,7 @@ def get_allegrofranka_in_camera_frame(preprocessed_data_dir):
         franka_c = franka_commanded_position[franka_commanded_id]
         allegro_c = allegro_commanded_position[allegro_commanded_id]
         allegro_franka.append(np.concatenate((allegro,franka))) # (23,) allegro (16,) franka(7,)
-        commanded_allegro_franka.append(np.concatenate((allegro_c,franka_c))) # (19,) allegro(16,) franka(3,) cartesian
+        commanded_allegro_franka.append(np.concatenate((allegro_c,franka_c))) # (19,) allegro(16,) franka(7,) position+ orientation
     return allegro_franka,commanded_allegro_franka
 
 def get_object_keypoints_in_camera_frame_videowisecotracker(trajectory, preprocessed_data_dir, use_pixel_keypoints):
@@ -286,7 +288,7 @@ if __name__ == "__main__":
     actions = []
     all_graphs = []
     demo_nums = []
-    for episode_idx in range(len(dataset)):
+    for episode_idx in range(10):
         for start_idx in range(args.subsample):
             # Subsample actions and observations
             episode_actions = dataset[episode_idx]['actions'][start_idx::args.subsample]
