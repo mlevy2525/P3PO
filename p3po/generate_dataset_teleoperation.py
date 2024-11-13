@@ -209,7 +209,7 @@ if __name__ == "__main__":
             print(f"Skipping {allegrofranka_path} because it has less than {args.min_length} frames")
             too_short += 1
             continue
-        demonstration = {'object_keypoints': H_O_C_trajectory, 'allegro_franka': allegrofranka, 'human_commanded':commanded_allegrofranka,'demo_num': demo_num}
+        demonstration = {'object_keypoints': H_O_C_trajectory, 'states': allegrofranka, 'human_commanded':commanded_allegrofranka,'demo_num': demo_num}
         dataset.append(demonstration)
 
     for demo in dataset:
@@ -224,10 +224,10 @@ if __name__ == "__main__":
     print(f"This excludes... Number of demonstrations skipped due to missing files: {missing_files}")
     print(f"This excludes... Number of demonstrations skipped due to being too short: {too_short}")
     print(f"Shape of the object_keypoints: {dataset[0]['object_keypoints'][0].shape}")
-    print(f"Shape of the allegrofranka joint angles: {dataset[0]['allegro_franka'][0].shape}")
+    print(f"Shape of the allegrofranka joint angles: {dataset[0]['states'][0].shape}")
     print(f"Shape of the actions: {dataset[0]['actions'][0].shape}")
     print("Average length of object keypoint demonstrations: ", np.mean([len(demo['object_keypoints']) for demo in dataset]))
-    print("Average length of allegrofranka joint demonstrations: ", np.mean([len(demo['allegro_franka']) for demo in dataset]))
+    print("Average length of allegrofranka joint demonstrations: ", np.mean([len(demo['states']) for demo in dataset]))
     print("Average length of action sequence: ", np.mean([len(demo['actions']) for demo in dataset]))
     effective_hz = 30 // args.subsample
     dataset_name = f'{args.task_name}_{str(args.keypoints_type)}d_{args.action_type}_actions_minlength{args.min_length}_{effective_hz}hz_closed_loop_dataset.pkl'
@@ -299,7 +299,7 @@ if __name__ == "__main__":
             for idx in range(start_idx, len(dataset[episode_idx]['actions']) + 1, args.subsample):
                 concatenated = np.concatenate([
                     dataset[episode_idx]['object_keypoints'][idx].reshape(-1),
-                    dataset[episode_idx]['allegro_franka'][idx].reshape(-1)
+                    dataset[episode_idx]['states'][idx].reshape(-1)
                 ])
                 graphs.append(concatenated)
             all_graphs.append({'graph': graphs})
