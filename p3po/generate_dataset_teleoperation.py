@@ -100,7 +100,7 @@ def get_fingertips_in_camera_frame(preprocessed_data_dir):
         hand_trajectory.append(H_F_Cs)
     return hand_trajectory
 '''
-def get_allegrofranka_in_camera_frame(preprocessed_data_dir):
+def get_frankallegro_in_camera_frame(preprocessed_data_dir):
     image_indices, allegro_position, allegro_indices,franka_position,franka_indices,allegro_commanded_indices,allegro_commanded_position,franka_commanded_indices,franka_commanded_position = _load_files(preprocessed_data_dir)
     allegro_franka = []
     commanded_allegro_franka =[]
@@ -115,8 +115,8 @@ def get_allegrofranka_in_camera_frame(preprocessed_data_dir):
         allegro = allegro_position[allegro_id]
         franka_c = franka_commanded_position[franka_commanded_id]
         allegro_c = allegro_commanded_position[allegro_commanded_id]
-        allegro_franka.append(np.concatenate((allegro,franka))) # (23,) allegro (16,) franka(7,)
-        commanded_allegro_franka.append(np.concatenate((allegro_c,franka_c))) # (19,) allegro(16,) franka(7,) position+ orientation
+        allegro_franka.append(np.concatenate((franka,allegro))) # (23,) franka(7,) allegro (16,)
+        commanded_allegro_franka.append(np.concatenate((franka_c,allegro_c))) # (23,) franka(7,) position+ orientation allegro(16,)
     return allegro_franka,commanded_allegro_franka
 
 def get_object_keypoints_in_camera_frame_videowisecotracker(trajectory, preprocessed_data_dir, use_pixel_keypoints):
@@ -201,7 +201,7 @@ if __name__ == "__main__":
             H_O_C_trajectory = get_object_keypoints_in_camera_frame_framewisecotracker(trajectory=object_keypoint_trajectory, use_pixel_keypoints=dimensions==2)
         else:
             H_O_C_trajectory = get_object_keypoints_in_camera_frame_videowisecotracker(trajectory=object_keypoint_trajectory, preprocessed_data_dir=allegrofranka_path, use_pixel_keypoints=dimensions==2)
-        allegrofranka,commanded_allegrofranka = get_allegrofranka_in_camera_frame(preprocessed_data_dir=allegrofranka_path)
+        allegrofranka,commanded_allegrofranka = get_frankallegro_in_camera_frame(preprocessed_data_dir=allegrofranka_path)
         assert len(H_O_C_trajectory) == len(allegrofranka)
         traj_lengths.append(len(allegrofranka))
 
