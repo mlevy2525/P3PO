@@ -7,9 +7,20 @@ import yaml
 import imageio
 
 import torch
+import zmq
 
 from points_class import PointsClass
 from pathlib import Path
+
+import io
+import base64
+from PIL import Image
+
+def serialize_image(image):
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    image_bytes = buffer.getvalue()
+    return base64.b64encode(image_bytes).decode('utf-8')
 
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
@@ -37,6 +48,7 @@ subsample = 5
 with open("../cfgs/suite/p3po.yaml") as stream:
     try:
         cfg = yaml.safe_load(stream)
+        original_cfg = cfg
     except yaml.YAMLError as exc:
         print(exc)
 
@@ -74,10 +86,72 @@ for i in range(num_demos):
             subsample_counter += 1
         video.release()
 
+    # # get points in a separate way
+    # cfg['task_name'] = 'bottle' #'plate_12p'  #"plate_14p"
+    # cfg['num_points'] = 5 #12 #14
+    # _points_class = PointsClass(**cfg)
+
+    # # context = zmq.Context()
+    # # socket = context.socket(zmq.REQ)
+    # # socket.connect("tcp://localhost:6000")
+
+    # frame = frames[0]
+    # # image = Image.fromarray(frame)
+    # # serialized_image = serialize_image(image)
+    # # request = {
+    # #     "image": serialized_image,
+    # #     "image_path": "",
+    # #     "query": "Get the bounding box of the bottle"
+    # # }
+    # # socket.send_json(request)
+    # # response = socket.recv_json()
+    # # bbox_bottle = response["result"]
+    # # print("bbox_plate", bbox_bottle)
+    # # print(type(bbox_bottle))
+    # # exit()
+    # bbox_bottle = [293.45166015625, 206.19839477539062, 313.58905029296875, 282.3005065917969]
+
+    # _points_class.add_to_image_list(frame)
+    # _points_class.find_semantic_similar_points(object_bbox = bbox_bottle)
+    # print("found semantic similar points", _points_class.semantic_similar_points)
+    # print(type(_points_class.semantic_similar_points))
+    # first_points = _points_class.semantic_similar_points
+    # first_points_num = cfg['num_points']
+
+    # cfg["task_name"] = 'cam1_robot' #'robot_and_rack_8p'  #"rack_and_robot"
+    # cfg["num_points"] = 5 #8 #10
+    # _points_class = PointsClass(**cfg)
+    # _points_class.add_to_image_list(frame)
+    # _points_class.find_semantic_similar_points()
+    # second_points = _points_class.semantic_similar_points
+    # second_points_num = cfg['num_points']
+    # total_points_num = first_points_num + second_points_num
+    # print("found semantic similar points", second_points)
+    # append first points to the semantic similar points
+    first_points = torch.tensor([[  0.0000, 297.4517, 270.1984],
+        [  0.0000, 306.4517, 270.1984],
+        [  0.0000, 298.4517, 248.1984],
+        [  0.0000, 306.4517, 248.1984],
+        [  0.0000, 304.4517, 216.1984]])
+    second_points = torch.tensor([[  0., 224., 249.],
+        [  0., 243., 228.],
+        [  0., 231., 201.],
+        [  0., 239., 193.],
+        [  0., 245., 188.]])
+    total_points = torch.cat((second_points, first_points), dim=0)
+    print("total_points", total_points)
+
+    points_class.semantic_similar_points = total_points
+
+
     points_class.add_to_image_list(frames[0])
-    points_class.find_semantic_similar_points()
+    # points_class.find_semantic_similar_points()
     points_class.track_points(is_first_step=True)
     points_class.track_points(one_frame=(mark_every == 1))
+
+    cfg = original_cfg
+
+    
 
     if use_gt_depth:
         points_class.set_depth(depth[0])

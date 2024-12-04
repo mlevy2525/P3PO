@@ -125,6 +125,7 @@ class BCDataset(IterableDataset):
             self.actions = []
 
         # read data
+        # import ipdb; ipdb.set_trace()
         self._episodes = {}
         self._max_episode_len = 0
         self._max_state_dim = 0

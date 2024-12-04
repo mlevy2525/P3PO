@@ -682,6 +682,7 @@ class BCAgent:
         # features
         features = []
         for key in self.keys:
+            # import ipdb; ipdb.set_trace()
             to_input = data[key].float()
             shape = to_input.shape
 

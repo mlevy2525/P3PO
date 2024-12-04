@@ -73,7 +73,7 @@ class PointsClass():
         # Set up cotracker
         sys.path.append(root_dir + "/co-tracker/")
         from cotracker.predictor import CoTrackerOnlinePredictor
-        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/cotracker2v1.pth", window_len=16).to(device)
+        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/baseline_online.pth", window_len=16).to(device)
 
 
         self.transform = transforms.Compose([ 
@@ -258,6 +258,10 @@ class PointsClass():
             img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             img_list.append(img.copy())
+            # # save the image
+            # image_folder = "/home/aadhithya/bobby_wks/P3PO/saved_images"
+            # import time
+            # plt.imsave(f"{image_folder}/image_{time.time()}_{frame_num}.png", img)
             plt.close()
 
         return img_list

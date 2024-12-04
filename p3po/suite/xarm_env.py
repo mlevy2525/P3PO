@@ -396,6 +396,7 @@ def make(
     env.seed(seed)
 
     # apply wrappers
+    # import ipdb; ipdb.set_trace()
     env = RGBArrayAsObservationWrapper(
         env,
         max_episode_len=max_episode_len,

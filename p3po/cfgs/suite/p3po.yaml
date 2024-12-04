@@ -1,10 +1,10 @@
 defaults:
-  - _self_
-  - task: p3po
+- _self_
+- task: p3po
 
-root_dir: /mnt/robotlab/siddhant/P3PO
+root_dir: /home/aadhithya/bobby_wks/P3PO
 
-task_name: "test"
+task_name: '0812_pick_yoghurt_out_from_fridge' #'pick_plate_from_rack' #'0902_pickmug_anything' #"11_05_pick_white_plate_anything"
 device: "cuda"
 
 width: -1
@@ -15,4 +15,4 @@ ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: 5
+num_points: 10 #24 #24 # 9

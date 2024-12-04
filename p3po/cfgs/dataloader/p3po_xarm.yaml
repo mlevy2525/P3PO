@@ -10,7 +10,7 @@ bc_dataset:
   prompt: ${prompt}
   temporal_agg: ${temporal_agg}
   num_queries: ${num_queries}
-  img_size: 128
+  img_size: 512
   action_after_steps: ${suite.action_after_steps}
   intermediate_goal_step: 30
   store_actions: true

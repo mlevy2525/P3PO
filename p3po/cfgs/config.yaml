@@ -6,7 +6,7 @@ defaults:
   - override hydra/launcher: submitit_local
 
 # Root Dir
-root_dir: /mnt/robotlab/siddhant/P3PO
+root_dir: /home/aadhithya/bobby_wks/P3PO
 use_p3po: True
 
 # misc
@@ -20,8 +20,8 @@ batch_size: 64
 # experiment
 obs_type: "features" # pixels, features
 training_keys: ['graph']
-depth_keys: ['depth']
-num_demos_per_task: 50
+depth_keys: []
+num_demos_per_task: 60
 encoder_type: 'resnet' # base, resnet
 policy_type: 'gpt' # mlp, gpt
 policy_head: deterministic # deterministic, gmm, bet, diffusion, vqbet

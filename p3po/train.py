@@ -40,6 +40,7 @@ class WorkspaceIL:
     def __init__(self, cfg):
         self.work_dir = Path.cwd()
         print(f"workspace: {self.work_dir}")
+        # import ipdb; ipdb.set_trace()
 
         self.cfg = cfg
         utils.set_seed_everywhere(cfg.seed)
@@ -68,6 +69,7 @@ class WorkspaceIL:
             )
 
         self.env, self.task_descriptions = hydra.utils.call(self.cfg.suite.task_make_fn)
+        # import ipdb; ipdb.set_trace()
         if self.cfg.use_p3po:
             from suite.p3po import P3POWrapper
             from points_class import PointsClass

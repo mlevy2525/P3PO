@@ -36,6 +36,17 @@ class P3POWrapper(dm_env.Environment):
         # TODO: get object_bbox from reasoning server
         object_bbox = None
 
+        image = obs[self.pixel_keys[0]]
+        # # plot image
+        # print("plotting image")
+        # print(image.shape) # 360, 360, 3
+        # import matplotlib.pyplot as plt
+        # image_folder = "/home/aadhithya/bobby_wks/P3PO/saved_images"
+        # import time
+        # plt.imsave(f"{image_folder}/training_image_{time.time()}.png", image)
+        # plt.close()
+        # exit()
+
         self.points_class.add_to_image_list(obs[self.pixel_keys[0]])
         self.points_class.find_semantic_similar_points(object_bbox)
         self.points_class.track_points(is_first_step=True)
@@ -47,10 +58,14 @@ class P3POWrapper(dm_env.Environment):
 
         obs['graph'] = self.points_class.get_points()[-1]
         obs = self._env._replace(observation, observation=obs)
+        # # plot
+        # image = self.points_class.plot_image()
+        # exit()
 
         return obs
 
     def step(self, action):
+        print("step")
         observation = self._env.step(action)
         obs = observation.observation
 
@@ -66,6 +81,9 @@ class P3POWrapper(dm_env.Environment):
 
         obs['graph'] = self.points_class.get_points()[-1]
         obs = self._env._replace(observation, observation=obs)
+
+        # image = self.points_class.plot_image()
+        # exit()
 
         return obs
 
