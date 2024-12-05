@@ -22,7 +22,7 @@ history_len: 10
 # eval
 eval_every_steps: 200000
 num_eval_episodes: 5
-eval_history_len: 5
+eval_history_len: 10
 
 # data loading
 action_after_steps: 1 #8
