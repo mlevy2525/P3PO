@@ -152,7 +152,7 @@ class PointsClass():
             The depth map for the current image. Depth is height x width.
         """
 
-        if self.image_list.shape[0] == 8:
+        if self.depth.shape[0] == 8:
             self.depth = self.depth[1:]
 
         while self.depth.shape[0] < 8:
