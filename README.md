@@ -96,6 +96,8 @@ python train.py agent=baku suite=metaworld dataloader=p3po_general suite.task.ta
 
 - If you would like to use depth anything instead of ground truth depth here set depth_keys in the config to an empty list.
 
+- We reccomend using a very early checkpoint (often the 10K checkpoint is sufficent). Our results typically use the 50K checkpoint.
+
 ## Evaluating P3PO
 - Before you evaluate set your root directory in the config_eval.yaml.
 
