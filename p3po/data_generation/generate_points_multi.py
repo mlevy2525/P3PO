@@ -25,8 +25,8 @@ def serialize_image(image):
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
 read_from_pickle = True
-pickle_path = "/home/aadhithya/bobby_wks/P3PO/expert_demos/xarm_env/0812_pick_yoghurt_out_from_fridge.pkl"
-pickle_image_key = "pixels1"
+pickle_path = "/home/aadhithya/bobby_wks/P3PO/expert_demos/xarm_env/1218_pick_bottle_from_fridge.pkl"
+pickle_image_key = "pixels4"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
 # To use gt depth, the depth must be in the same pickle as the images
@@ -48,7 +48,7 @@ subsample = 5
 with open("../cfgs/suite/p3po.yaml") as stream:
     try:
         cfg = yaml.safe_load(stream)
-        original_cfg = cfg
+        original_cfg = cfg.copy()
     except yaml.YAMLError as exc:
         print(exc)
 
@@ -86,60 +86,64 @@ for i in range(num_demos):
             subsample_counter += 1
         video.release()
 
-    # # get points in a separate way
-    # cfg['task_name'] = 'bottle' #'plate_12p'  #"plate_14p"
-    # cfg['num_points'] = 5 #12 #14
-    # _points_class = PointsClass(**cfg)
+    # get points in a separate way
+    cfg['task_name'] = 'bottle' #'plate_12p'  #"plate_14p"
+    cfg['num_points'] = 5 #12 #14
+    _points_class = PointsClass(**cfg)
 
-    # # context = zmq.Context()
-    # # socket = context.socket(zmq.REQ)
-    # # socket.connect("tcp://localhost:6000")
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect("tcp://localhost:6000")
 
-    # frame = frames[0]
-    # # image = Image.fromarray(frame)
-    # # serialized_image = serialize_image(image)
-    # # request = {
-    # #     "image": serialized_image,
-    # #     "image_path": "",
-    # #     "query": "Get the bounding box of the bottle"
-    # # }
-    # # socket.send_json(request)
-    # # response = socket.recv_json()
-    # # bbox_bottle = response["result"]
-    # # print("bbox_plate", bbox_bottle)
-    # # print(type(bbox_bottle))
+    frame = frames[0]
+    image = Image.fromarray(frame)
+    serialized_image = serialize_image(image)
+    request = {
+        "image": serialized_image,
+        "image_path": "",
+        "query": "Get the bounding box of the bottle"
+    }
+    socket.send_json(request)
+    response = socket.recv_json()
+    bbox_bottle = response["result"]
+    bbox_bottle = bbox_bottle[:-1]
+    print("bbox_plate", bbox_bottle)
+    print(type(bbox_bottle))
     # # exit()
     # bbox_bottle = [293.45166015625, 206.19839477539062, 313.58905029296875, 282.3005065917969]
 
-    # _points_class.add_to_image_list(frame)
-    # _points_class.find_semantic_similar_points(object_bbox = bbox_bottle)
-    # print("found semantic similar points", _points_class.semantic_similar_points)
-    # print(type(_points_class.semantic_similar_points))
-    # first_points = _points_class.semantic_similar_points
-    # first_points_num = cfg['num_points']
+    _points_class.add_to_image_list(frame)
+    _points_class.find_semantic_similar_points(object_bbox = bbox_bottle)
+    print("found semantic similar points", _points_class.semantic_similar_points)
+    print(type(_points_class.semantic_similar_points))
+    first_points = _points_class.semantic_similar_points
+    first_points_num = cfg['num_points']
 
-    # cfg["task_name"] = 'cam1_robot' #'robot_and_rack_8p'  #"rack_and_robot"
-    # cfg["num_points"] = 5 #8 #10
-    # _points_class = PointsClass(**cfg)
-    # _points_class.add_to_image_list(frame)
-    # _points_class.find_semantic_similar_points()
-    # second_points = _points_class.semantic_similar_points
-    # second_points_num = cfg['num_points']
-    # total_points_num = first_points_num + second_points_num
-    # print("found semantic similar points", second_points)
+    cfg["task_name"] = 'cam4_robot' #'robot_and_rack_8p'  #"rack_and_robot"
+    cfg["num_points"] = 5 #8 #10
+    _points_class = PointsClass(**cfg)
+    _points_class.add_to_image_list(frame)
+    _points_class.find_semantic_similar_points()
+    second_points = _points_class.semantic_similar_points
+    second_points_num = cfg['num_points']
+    total_points_num = first_points_num + second_points_num
+    print("found semantic similar points", second_points)
     # append first points to the semantic similar points
-    first_points = torch.tensor([[  0.0000, 297.4517, 270.1984],
-        [  0.0000, 306.4517, 270.1984],
-        [  0.0000, 298.4517, 248.1984],
-        [  0.0000, 306.4517, 248.1984],
-        [  0.0000, 304.4517, 216.1984]])
-    second_points = torch.tensor([[  0., 224., 249.],
-        [  0., 243., 228.],
-        [  0., 231., 201.],
-        [  0., 239., 193.],
-        [  0., 245., 188.]])
+
+    # first_points = torch.tensor([[  0.0000, 297.4517, 270.1984],
+    #     [  0.0000, 306.4517, 270.1984],
+    #     [  0.0000, 298.4517, 248.1984],
+    #     [  0.0000, 306.4517, 248.1984],
+    #     [  0.0000, 304.4517, 216.1984]])
+    # second_points = torch.tensor([[  0., 224., 249.],
+    #     [  0., 243., 228.],
+    #     [  0., 231., 201.],
+    #     [  0., 239., 193.],
+    #     [  0., 245., 188.]])
     total_points = torch.cat((second_points, first_points), dim=0)
     print("total_points", total_points)
+    
+    # points_class = PointsClass(**original_cfg)
 
     points_class.semantic_similar_points = total_points
 
@@ -148,8 +152,6 @@ for i in range(num_demos):
     # points_class.find_semantic_similar_points()
     points_class.track_points(is_first_step=True)
     points_class.track_points(one_frame=(mark_every == 1))
-
-    cfg = original_cfg
 
     
 
@@ -195,7 +197,7 @@ for i in range(num_demos):
                     video_list.append(images[j])
 
     if write_videos:
-        imageio.mimsave(f"videos/{cfg['task_name']}_%d.mp4" % i, video_list, fps=30)
+        imageio.mimsave(f"videos/{original_cfg['task_name']}_%d.mp4" % i, video_list, fps=30)
     
     episode_list.append(torch.stack(points_list))
     points_class.reset_episode()
@@ -208,7 +210,7 @@ final_graph['use_gt_depth'] = use_gt_depth
 final_graph['gt_depth_key'] = gt_depth_key
 final_graph['pickle_path'] = pickle_path
 final_graph['video_paths'] = video_paths
-final_graph['cfg'] = cfg
+final_graph['cfg'] = original_cfg
 
-Path(f"{cfg['root_dir']}/processed_data/points").mkdir(parents=True, exist_ok=True)
-pickle.dump(final_graph, open(f"{cfg['root_dir']}/processed_data/points/{cfg['task_name']}.pkl", "wb"))
+Path(f"{original_cfg['root_dir']}/processed_data/points").mkdir(parents=True, exist_ok=True)
+pickle.dump(final_graph, open(f"{original_cfg['root_dir']}/processed_data/points/{original_cfg['task_name']}.pkl", "wb"))

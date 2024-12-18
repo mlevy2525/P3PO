@@ -54,6 +54,8 @@ class WorkspaceIL:
         self.expert_replay_iter = iter(self.expert_replay_loader)
         self.stats = self.expert_replay_loader.dataset.stats
 
+        # import ipdb; ipdb.set_trace()
+
         # create logger
         self.logger = Logger(self.work_dir, use_tb=self.cfg.use_tb)
         # create envs

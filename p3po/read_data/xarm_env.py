@@ -49,6 +49,8 @@ def get_relative_action(actions, action_after_steps):
     last_action[-1] = actions[-1][-1]
     while len(relative_actions) < len(actions):
         relative_actions.append(last_action)
+    
+    import ipdb; ipdb.set_trace()
     return np.array(relative_actions, dtype=np.float32)
 
 

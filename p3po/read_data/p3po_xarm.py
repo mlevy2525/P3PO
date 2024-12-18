@@ -49,6 +49,8 @@ def get_relative_action(actions, action_after_steps):
     last_action[-1] = actions[-1][-1]
     while len(relative_actions) < len(actions):
         relative_actions.append(last_action)
+
+    # import ipdb; ipdb.set_trace()
     return np.array(relative_actions, dtype=np.float32)
 
 
@@ -151,6 +153,7 @@ class BCDataset(IterableDataset):
             # store
             self._episodes[_path_idx] = []
             for i in range(min(num_demos_per_task, len(observations))):
+                print(f"Processing {i}th episode")
                 # compute actions
                 # absolute actions
                 actions = np.concatenate(
@@ -175,6 +178,7 @@ class BCDataset(IterableDataset):
                 # action after steps
                 if relative_actions:
                     actions = get_relative_action(actions, self._action_after_steps)
+                    # import ipdb; ipdb.set_trace()
                 else:
                     actions = actions[self._action_after_steps :]
                 # Convert cartesian states to quaternion orientation
@@ -213,6 +217,7 @@ class BCDataset(IterableDataset):
                     task_emb=task_emb,
                 )
                 self._episodes[_path_idx].append(episode)
+                # import ipdb; ipdb.set_trace()
                 self._max_episode_len = max(
                     self._max_episode_len,
                     (
