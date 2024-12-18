@@ -39,6 +39,7 @@ class WorkspaceIL:
     def __init__(self, cfg):
         self.work_dir = Path.cwd()
         print(f"workspace: {self.work_dir}")
+        # import ipdb; ipdb.set_trace()
 
         self.cfg = cfg
         utils.set_seed_everywhere(cfg.seed)
@@ -82,6 +83,7 @@ class WorkspaceIL:
 
 
             points_class = PointsClass(**points_cfg)
+            import ipdb; ipdb.set_trace()
             for i in range(len(self.env)):
                 self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class)
 
@@ -115,6 +117,7 @@ class WorkspaceIL:
         return self.global_step * self.cfg.suite.action_repeat
 
     def eval(self):
+        import ipdb; ipdb.set_trace()
         self.agent.train(False)
         episode_rewards = []
         successes = []
@@ -125,6 +128,7 @@ class WorkspaceIL:
             success = []
 
             while eval_until_episode(episode):
+                import ipdb; ipdb.set_trace()
                 time_step = self.env[env_idx].reset()
                 self.agent.buffer_reset()
                 step = 0
@@ -208,26 +212,49 @@ class WorkspaceIL:
             agent_payload["vqvae"] = payload
         self.agent.load_snapshot(agent_payload, eval=True)
 
-
-@hydra.main(config_path="cfgs", config_name="config_eval")
-def main(cfg):
-    from eval import WorkspaceIL as W
-
+def run_eval(cfg):
     root_dir = Path.cwd()
-    workspace = W(cfg)
+    workspace = WorkspaceIL(cfg)
 
     # Load weights
     snapshots = {}
-    # bc
     bc_snapshot = Path(cfg.bc_weight)
     if not bc_snapshot.exists():
         raise FileNotFoundError(f"bc weight not found: {bc_snapshot}")
-    print(f"loading bc weight: {bc_snapshot}")
+    print(f"Loading BC weight: {bc_snapshot}")
     snapshots["bc"] = bc_snapshot
     workspace.load_snapshot(snapshots)
 
     workspace.eval()
 
-
 if __name__ == "__main__":
+    import hydra
+
+    @hydra.main(config_path="cfgs", config_name="config_eval")
+    def main(cfg):
+        run_eval(cfg)
+
     main()
+
+# @hydra.main(config_path="cfgs", config_name="config_eval")
+# def main(cfg):
+#     from eval import WorkspaceIL as W
+
+#     root_dir = Path.cwd()
+#     workspace = W(cfg)
+
+#     # Load weights
+#     snapshots = {}
+#     # bc
+#     bc_snapshot = Path(cfg.bc_weight)
+#     if not bc_snapshot.exists():
+#         raise FileNotFoundError(f"bc weight not found: {bc_snapshot}")
+#     print(f"loading bc weight: {bc_snapshot}")
+#     snapshots["bc"] = bc_snapshot
+#     workspace.load_snapshot(snapshots)
+
+#     workspace.eval()
+
+
+# if __name__ == "__main__":
+#     main()
