@@ -32,3 +32,4 @@ cd ../
 
 pip install torchvision
 pip install huggingface-hub==0.23.2
+pip install --force-reinstall transformers==4.45.2
