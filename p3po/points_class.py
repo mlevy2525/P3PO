@@ -153,7 +153,7 @@ class PointsClass():
             # from PIL import Image
             # Image.fromarray((depth * 255).astype(np.uint8)).save(f"/mnt/robotlab/siddhant/P3PO/saved_images/depth_{time.time()}_{frame_num}.png")
             self.depth[frame_idx] = depth
-            print("current depth", depth)
+            # print("current depth", depth)
 
     def set_depth(self, depth):
         """
@@ -223,6 +223,7 @@ class PointsClass():
                 except:
                     depth = 0
 
+                # import ipdb; ipdb.set_trace()
                 x = (self.tracks[0, frame_idx, point][0] - width/2) * depth
                 y = (self.tracks[0, frame_idx, point][1] - height/2) * depth
                 x /= (width/2)

@@ -102,8 +102,11 @@ class RobotEnv(gym.Env):
             robot_state = ret["robot_state"]["xarm"]
 
         cartesian = robot_state[:6]
+        print("robot state: ", robot_state)
         quat_cartesian = get_quaternion_orientation(cartesian)
+        print("quat_cartesian: ", quat_cartesian)
         robot_state = np.concatenate([quat_cartesian, robot_state[6:]], axis=0)
+        print("robot state after conversion: ", robot_state)
 
         # subscribe images
         image_list = []
@@ -127,12 +130,14 @@ class RobotEnv(gym.Env):
 
         return obs, self.reward, False, None
 
-    def reset(self):  # currently same positions, with gripper opening
+    def reset(self, flag=None):  # currently same positions, with gripper opening
         if self.use_robot:
-            print("resetting")
-            self.action_request_socket.send(b"reset")
-            reset_state = pickle.loads(self.action_request_socket.recv())
-            print("reset done")
+            if flag:
+                # reset robot
+                print("resetting")
+                self.action_request_socket.send(b"reset")
+                reset_state = pickle.loads(self.action_request_socket.recv())
+                print("reset done")
 
             # subscribe robot state
             print("subscribing robot state")

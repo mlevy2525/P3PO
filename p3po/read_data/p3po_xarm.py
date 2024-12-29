@@ -176,6 +176,19 @@ class BCDataset(IterableDataset):
                     actions = get_relative_action(actions, self._action_after_steps)
                 else:
                     actions = actions[self._action_after_steps :]
+                # # save actions to a npy file
+                # import ipdb; ipdb.set_trace()
+                # print(observations[i]["cartesian_states"])
+                # if i == 22:
+                #     np.save(
+                #         f"/mnt/robotlab/siddhant/P3PO/actions.npy",
+                #         actions,
+                #     )
+                #     np.save(
+                #         f"/mnt/robotlab/siddhant/P3PO/observations.npy",
+                #         observations[i]["cartesian_states"],
+                #     )
+                #     exit()
                 # Convert cartesian states to quaternion orientation
                 observations[i]["cartesian_states"] = get_quaternion_orientation(
                     observations[i]["cartesian_states"]

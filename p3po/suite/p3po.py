@@ -14,6 +14,15 @@ import io
 import base64
 import torch
 
+from config_singleton import ConfigSingleton
+
+# print(ConfigSingleton.get_config())
+# print each key and its value
+# for key in ConfigSingleton.get_config():
+#     print(key, ":", ConfigSingleton.get_config()[key])
+current_task = ConfigSingleton.get_config()["suite"]['task']['tasks'][0]
+# current_weight = ConfigSingleton.get_config()["bc_weight"]
+
 def serialize_image(image):
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
@@ -32,7 +41,7 @@ class P3POWrapper(dm_env.Environment):
         self.isFirstReset = True
 
         self.observation_spec = self._env.observation_spec
-        obs = self.reset(flag=1).observation
+        obs = self.reset(flag=0).observation
         self._obs_spec["graph"] = specs.BoundedArray(
             shape=obs["graph"].shape,
             dtype=np.float32,
@@ -66,21 +75,26 @@ class P3POWrapper(dm_env.Environment):
             socket.connect("tcp://172.24.71.224:6000")
 
             # Initialize the PointsClass object
-            cfg['task_name'] = 'bottle' #'plate_12p'  #"plate_14p"
-            cfg['num_points'] = 5 #12 #14
+            cfg['task_name'] = 'bottle' #'cylindial_bottle' #'plate_12p'  #"plate_14p"
+            cfg['num_points'] = 5 #6 #12 #14
             points_class = PointsClass(**cfg)
 
             # # # # send the image to the reasoning server and get the bounding box ########################
             image = obs[self.pixel_keys[0]]
             frame = image
+            image = image[:,:,::-1]
 
             # # convert np array to image
             image = Image.fromarray(image)
             serialized_image = serialize_image(image)
+            # get bottle type from user
+            # bottle_type = input("Enter the bottle type: ")
+            bottle_type = 'bottle'
             request = {
                 "image": serialized_image,
                 "image_path": "",
-                "query": "Get the bounding box of the bottle"
+                "query": f"Get the bounding box of the {bottle_type}"
+                # "query": "Get the bounding box of the coke bottle"
             }
             socket.send_json(request)
             response = socket.recv_json()
@@ -90,17 +104,6 @@ class P3POWrapper(dm_env.Environment):
             print(type(bbox_plate))
             # # exit()
 
-
-            # TODO: get object_bbox from reasoning server
-            # bbox_plate = [288.23318481, 126.03538513, 359.97091675, 257.01574707]
-            # bbox_plate = [246.25900269, 103.23423004, 317.26687622, 219.7673645 ]
-            # bbox_plate = [131.79145813,191.11541748,192.15452576,265.63516235]
-            # bbox_plate = [141.8319091796875, 246.34805297851562, 184.5408935546875, 309.7018737792969]
-            # bbox_plate = [117.40306854, 176.61445618, 169.01112366, 244.98728943] # letter cup
-            # bbox_plate = [202.83328247070312, 279.2685546875, 217.8385009765625, 331.46942138671875]
-            # bbox_plate = [244.5233612060547, 92.18417358398438, 268.80908203125, 157.75901794433594]
-            # bbox_plate = [217.63137817382812, 82.5777587890625, 237.97607421875, 148.17152404785156]
-            # bbox_plate = [233.92860412597656, 58.02970504760742, 255.9622039794922, 124.33071899414062]
             points_class.add_to_image_list(frame)
             points_class.find_semantic_similar_points(object_bbox = bbox_plate)
             print("found semantic similar points", points_class.semantic_similar_points)
@@ -109,8 +112,8 @@ class P3POWrapper(dm_env.Environment):
             first_points_num = cfg['num_points']
 
             # initialize a new point tracking
-            cfg["task_name"] = 'cam4_robot' #'robot_and_rack_8p'  #"rack_and_robot"
-            cfg["num_points"] = 5 #8 #10
+            cfg["task_name"] = 'cam4_robot_place_bottle' if current_task == '1223_place_bottle_on_ground' else 'cam4_robot_7p' #'cam4_robot_7p' #'cam1_robot_7p' #'robot_and_rack_8p'  #"rack_and_robot"
+            cfg["num_points"] = 6 if current_task == '1223_place_bottle_on_ground' else 7 #7 #8 #10
             points_class = PointsClass(**cfg)
             points_class.add_to_image_list(frame)
             points_class.find_semantic_similar_points()
@@ -124,7 +127,7 @@ class P3POWrapper(dm_env.Environment):
             print("total_points", total_points)
 
             self.points_class.num_points = total_points_num
-            self.points_class.tracks = total_points
+            # self.points_class.tracks = total_points
         #     self.points_class.semantic_similar_points = torch.Tensor([[  0.,  69., 113.],
         # [  0.,  89.,  94.],
         # [  0.,  90.,  55.],
@@ -173,7 +176,7 @@ class P3POWrapper(dm_env.Environment):
         return obs
 
     def step(self, action):
-        print("p3po current step's action is: ", action)
+        # print("p3po current step's action is: ", action)
         if self.isFirstStep:
             self.isFirstStep = False
             print("p3po first step")
