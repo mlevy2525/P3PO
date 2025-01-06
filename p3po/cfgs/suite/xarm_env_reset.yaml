@@ -45,8 +45,8 @@ task_make_fn:
   seed: ${seed}
   height: 360 #128
   width: 360 #128
-  max_episode_len: ??? # to be specified later
-  max_state_dim: ??? # to be specified later
+  max_episode_len: 20
+  max_state_dim: 512
   use_egocentric: false
   task_description: "just training"
   pixel_keys: ${suite.pixel_keys}

@@ -15,6 +15,6 @@ bc_dataset:
   intermediate_goal_step: 30
   store_actions: true
   training_keys: ${training_keys}
-  subsample: 5
+  subsample: 1
   skip_first_n: 0
   relative_actions: true

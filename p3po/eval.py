@@ -39,6 +39,7 @@ class WorkspaceIL:
     def __init__(self, cfg):
         self.work_dir = Path.cwd()
         print(f"workspace: {self.work_dir}")
+        # import ipdb; ipdb.set_trace()
 
         self.cfg = cfg
         utils.set_seed_everywhere(cfg.seed)
@@ -54,9 +55,13 @@ class WorkspaceIL:
         # create logger
         self.logger = Logger(self.work_dir, use_tb=self.cfg.use_tb)
         # create envs
-        self.cfg.suite.task_make_fn.max_episode_len = (
-            self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
-        )
+        self.cfg.suite.task_make_fn.max_episode_len = 1000
+        # self.cfg.suite.task_make_fn.max_episode_len = (
+        #     self.expert_replay_loader.dataset._max_episode_len * self.cfg.suite.action_repeat
+        # )
+        # print(self.cfg.suite.action_repeat)
+        # print(self.expert_replay_loader.dataset._max_episode_len)
+        # print(f"max_episode_len: {self.cfg.suite.task_make_fn.max_episode_len}")
         self.cfg.suite.task_make_fn.max_state_dim = (
             self.expert_replay_loader.dataset._max_state_dim
         )
@@ -76,7 +81,9 @@ class WorkspaceIL:
                 except yaml.YAMLError as exc:
                     print(exc)
 
+
             points_class = PointsClass(**points_cfg)
+            # import ipdb; ipdb.set_trace()
             for i in range(len(self.env)):
                 self.env[i] = P3POWrapper(self.env[i], self.cfg.suite.pixel_keys, self.cfg.depth_keys, self.cfg.training_keys, points_class)
 
@@ -110,6 +117,7 @@ class WorkspaceIL:
         return self.global_step * self.cfg.suite.action_repeat
 
     def eval(self):
+        # import ipdb; ipdb.set_trace()
         self.agent.train(False)
         episode_rewards = []
         successes = []
@@ -120,6 +128,7 @@ class WorkspaceIL:
             success = []
 
             while eval_until_episode(episode):
+                # import ipdb; ipdb.set_trace()
                 time_step = self.env[env_idx].reset()
                 self.agent.buffer_reset()
                 step = 0
@@ -148,6 +157,19 @@ class WorkspaceIL:
                             self.global_step,
                             eval_mode=True,
                         )
+
+                    
+                    # # read from /mnt/robotlab/siddhant/P3PO/actions.npy to get the actions
+                    # replay_actions = np.load("/mnt/robotlab/siddhant/P3PO/actions.npy")
+                    # replay_step = 0
+                    # while replay_step < len(replay_actions):
+                    #     import ipdb; ipdb.set_trace()
+                    #     replay_action = replay_actions[replay_step]
+                    #     replay_step += 1
+                    #     time_step = self.env[env_idx].step(replay_action)
+                    #     if time_step.last():
+                    #         break
+                    # exit()
                     time_step = self.env[env_idx].step(action)
                     self.video_recorder.record(self.env[env_idx])
                     total_reward += time_step.reward
@@ -203,26 +225,51 @@ class WorkspaceIL:
             agent_payload["vqvae"] = payload
         self.agent.load_snapshot(agent_payload, eval=True)
 
-
-@hydra.main(config_path="cfgs", config_name="config_eval")
-def main(cfg):
-    from eval import WorkspaceIL as W
-
+def run_eval(cfg):
     root_dir = Path.cwd()
-    workspace = W(cfg)
+    workspace = WorkspaceIL(cfg)
 
     # Load weights
     snapshots = {}
-    # bc
     bc_snapshot = Path(cfg.bc_weight)
     if not bc_snapshot.exists():
         raise FileNotFoundError(f"bc weight not found: {bc_snapshot}")
-    print(f"loading bc weight: {bc_snapshot}")
+    print(f"Loading BC weight: {bc_snapshot}")
     snapshots["bc"] = bc_snapshot
     workspace.load_snapshot(snapshots)
 
     workspace.eval()
 
-
 if __name__ == "__main__":
+    from P3PO.p3po.config_singleton import ConfigSingleton
+    import hydra
+
+    @hydra.main(config_path="cfgs", config_name="config_eval")
+    def main(cfg):
+        ConfigSingleton(cfg)
+        run_eval(cfg)
+
     main()
+
+# @hydra.main(config_path="cfgs", config_name="config_eval")
+# def main(cfg):
+#     from eval import WorkspaceIL as W
+
+#     root_dir = Path.cwd()
+#     workspace = W(cfg)
+
+#     # Load weights
+#     snapshots = {}
+#     # bc
+#     bc_snapshot = Path(cfg.bc_weight)
+#     if not bc_snapshot.exists():
+#         raise FileNotFoundError(f"bc weight not found: {bc_snapshot}")
+#     print(f"loading bc weight: {bc_snapshot}")
+#     snapshots["bc"] = bc_snapshot
+#     workspace.load_snapshot(snapshots)
+
+#     workspace.eval()
+
+
+# if __name__ == "__main__":
+#     main()

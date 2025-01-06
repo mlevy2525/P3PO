@@ -645,6 +645,10 @@ class BCAgent:
 
         if self.temporal_agg:
             action = action.view(-1, self.num_queries, self._act_dim)
+            # Check bounds for `step` and `step + self.num_queries`
+            assert 0 <= step < self.all_time_actions.shape[0], f"Step index out of bounds: {step} not in [0, {self.all_time_actions.shape[0] - 1}]"
+            assert step + self.num_queries <= self.all_time_actions.shape[1], f"Step + num_queries out of bounds: {step + self.num_queries} exceeds {self.all_time_actions.shape[1]}"
+
             self.all_time_actions[[step], step : step + self.num_queries] = action[-1:]
             actions_for_curr_step = self.all_time_actions[:, step]
             actions_populated = torch.all(actions_for_curr_step != 0, axis=1)

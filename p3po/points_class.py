@@ -73,7 +73,7 @@ class PointsClass():
         # Set up cotracker
         sys.path.append(root_dir + "/co-tracker/")
         from cotracker.predictor import CoTrackerOnlinePredictor
-        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/cotracker2v1.pth", window_len=16).to(device)
+        self.cotracker = CoTrackerOnlinePredictor(checkpoint=root_dir + "/co-tracker/checkpoints/scaled_online.pth", window_len=16).to(device)
 
 
         self.transform = transforms.Compose([ 
@@ -145,7 +145,15 @@ class PointsClass():
             frame_idx = -1 * (last_n_frames - frame_num)
             numpy_image = self.image_list[0, frame_idx].cpu().numpy().transpose(1, 2, 0) * 255
             depth = self.depth_model.get_depth(numpy_image)
+            # # import ipdb; ipdb.set_trace()
+            # print(type(depth))
+            # print(depth.shape)
+            # # Save the depth map
+            # import time
+            # from PIL import Image
+            # Image.fromarray((depth * 255).astype(np.uint8)).save(f"/mnt/robotlab/siddhant/P3PO/saved_images/depth_{time.time()}_{frame_num}.png")
             self.depth[frame_idx] = depth
+            # print("current depth", depth)
 
     def set_depth(self, depth):
         """
@@ -215,6 +223,7 @@ class PointsClass():
                 except:
                     depth = 0
 
+                # import ipdb; ipdb.set_trace()
                 x = (self.tracks[0, frame_idx, point][0] - width/2) * depth
                 y = (self.tracks[0, frame_idx, point][1] - height/2) * depth
                 x /= (width/2)
@@ -250,6 +259,7 @@ class PointsClass():
 
             rainbow = plt.get_cmap('rainbow')
             # Generate n evenly spaced colors from the colormap
+            # import ipdb; ipdb.set_trace()
             colors = [rainbow(i / self.tracks.shape[2]) for i in range(self.tracks.shape[2])]
 
             for idx, coord in enumerate(self.tracks[0, frame_idx]):
@@ -258,6 +268,10 @@ class PointsClass():
             img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             img_list.append(img.copy())
+            # save the image
+            image_folder = "/mnt/robotlab/siddhant/P3PO/saved_images_temp"
+            import time
+            plt.imsave(f"{image_folder}/image_{time.time()}_{frame_num}.png", img)
             plt.close()
 
         return img_list

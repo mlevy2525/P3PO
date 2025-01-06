@@ -44,6 +44,7 @@ class RGBArrayAsObservationWrapper(dm_env.Environment):
 
         obs = self._env.reset()
         if self.use_robot:
+            # import ipdb; ipdb.set_trace()
             pixels = obs[pixel_keys[0]]
             self.observation_space = spaces.Box(
                 low=0, high=255, shape=pixels.shape, dtype=pixels.dtype

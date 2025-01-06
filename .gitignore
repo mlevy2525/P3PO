@@ -130,6 +130,14 @@ ENV/
 env.bak/
 venv.bak/
 
+*.jpg
+*.txt
+# *.npy
+*.h5
+*.csv
+*.pkl
+*.pt
+
 # Spyder project settings
 .spyderproject
 .spyproject
