@@ -14,7 +14,7 @@ import io
 import base64
 import torch
 
-from config_singleton import ConfigSingleton
+from P3PO.p3po.config_singleton import ConfigSingleton
 
 # print(ConfigSingleton.get_config())
 # print each key and its value
@@ -69,14 +69,27 @@ class P3POWrapper(dm_env.Environment):
                 except yaml.YAMLError as exc:
                     print(exc)
 
+            # Now read the current_info file
+            with open('/mnt/robotlab/siddhant/P3PO/p3po/current_info.yaml', 'r') as stream:
+                try:
+                    info = yaml.safe_load(stream)
+                    print(info)
+                    desired_object = info['desired_object']
+                except yaml.YAMLError as exc:
+                    print(f"Error reading YAML file: {exc}")
+
             # connect to reasoning server at port 8888 at 172.24.71.224 ############################
             context = zmq.Context()
             socket = context.socket(zmq.REQ)
             socket.connect("tcp://172.24.71.224:6000")
 
             # Initialize the PointsClass object
-            cfg['task_name'] = 'bottle' #'cylindial_bottle' #'plate_12p'  #"plate_14p"
-            cfg['num_points'] = 5 #6 #12 #14
+            if current_task in ['1223_place_bottle_on_ground', '0103_place_bottle_on_ground', '1220_pick_bottle_from_fridge_new']: #'cylindial_bottle' #'plate_12p'  #"plate_14p"
+                cfg['task_name'] = 'bottle' 
+                cfg['num_points'] = 5
+            elif current_task in ['1220_pick_bottle_from_side_door', '0105_place_side_door_bottle_on_ground', '1220_pick_bottle_from_side_door_new']:
+                cfg['task_name'] = 'cylindial_bottle'
+                cfg['num_points'] = 6
             points_class = PointsClass(**cfg)
 
             # # # # send the image to the reasoning server and get the bounding box ########################
@@ -93,7 +106,7 @@ class P3POWrapper(dm_env.Environment):
             request = {
                 "image": serialized_image,
                 "image_path": "",
-                "query": f"Get the bounding box of the {bottle_type}"
+                "query": f"Get the bounding box of the {desired_object}"
                 # "query": "Get the bounding box of the coke bottle"
             }
             socket.send_json(request)
@@ -112,11 +125,41 @@ class P3POWrapper(dm_env.Environment):
             first_points_num = cfg['num_points']
 
             # initialize a new point tracking
-            cfg["task_name"] = 'cam4_robot_place_bottle' if current_task == '1223_place_bottle_on_ground' else 'cam4_robot_7p' #'cam4_robot_7p' #'cam1_robot_7p' #'robot_and_rack_8p'  #"rack_and_robot"
-            cfg["num_points"] = 6 if current_task == '1223_place_bottle_on_ground' else 7 #7 #8 #10
+            # cfg["task_name"] = 'cam4_robot_place_bottle' if current_task == '1223_place_bottle_on_ground' else 'cam4_robot_7p' #'cam4_robot_7p' #'cam1_robot_7p' #'robot_and_rack_8p'  #"rack_and_robot"
+            # cfg["num_points"] = 6 if current_task == '1223_place_bottle_on_ground' else 7 #7 #8 #10
+            # cfg["task_name"] = 'cam4_robot_place_bottle_8p' if current_task in ['1223_place_bottle_on_ground', '0103_place_bottle_on_ground'] else 'cam4_robot_8p'
+            # cfg["num_points"] = 8
+            if current_task in ['1220_pick_bottle_from_fridge_new']:
+                cfg['task_name'] = 'cam4_robot_7p'
+                cfg['num_points'] = 7
+            elif current_task in ['0105_place_side_door_bottle_on_ground']:
+                cfg['task_name'] = 'cam4_robot_place_side_door_bottle'
+                cfg['num_points'] = 7
+            elif current_task in ['1223_place_bottle_on_ground']:
+                cfg['task_name'] = 'cam4_robot_place_bottle_8p'
+                cfg['num_points'] = 8
+            elif current_task in ['1220_pick_bottle_from_side_door_new']:
+                cfg['task_name'] = 'cam1_robot_new'
+                cfg['num_points'] = 7
             points_class = PointsClass(**cfg)
+
+            request = {
+                "image": serialized_image,
+                "image_path": "",
+                "query": f"Get the bounding box of the robot (only get one)"
+                # "query": "Get the bounding box of the coke bottle"
+            }
+            socket.send_json(request)
+            response = socket.recv_json()
+            bbox_plate = response["result"]
+            bbox_plate = bbox_plate[:-1] if len(bbox_plate) == 5 else bbox_plate
+            print("bbox_plate", bbox_plate)
+            print(type(bbox_plate))
             points_class.add_to_image_list(frame)
-            points_class.find_semantic_similar_points()
+            points_class.find_semantic_similar_points(object_bbox=bbox_plate)
+
+            # points_class.add_to_image_list(frame)
+            # points_class.find_semantic_similar_points()
             second_points = points_class.semantic_similar_points
             second_points_num = cfg['num_points']
             total_points_num = first_points_num + second_points_num

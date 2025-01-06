@@ -24,12 +24,12 @@ class EnvironmentReset:
         return self.env[0].reset(flag=1)
 
 if __name__ == "__main__":
-    from config_singleton import ConfigSingleton
+    from P3PO.p3po.config_singleton import ConfigSingleton
     import hydra
 
     @hydra.main(config_path="cfgs", config_name="config_eval")
     def main(cfg):
-        ConfigSingleton(cfg)
+        # ConfigSingleton(cfg)
         env_reset = EnvironmentReset(cfg)
 
         print("Resetting environment...")

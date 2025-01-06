@@ -1,59 +1,108 @@
-#!/usr/bin/env python3
-
 import os
 import subprocess
-from config_singleton import ConfigSingleton  # Singleton for storing the global configuration
+import zmq
+import cv2
+from PIL import Image
+import base64
+import numpy as np
+import io
+# import sys
+# sys.path.append('/mnt/robotlab/siddhant/P3PO')
+# print(sys.path)
+
+from P3PO.p3po.config_singleton import ConfigSingleton
+from get_image import CameraCapture
+
+def serialize_image(image):
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    image_bytes = buffer.getvalue()
+    return base64.b64encode(image_bytes).decode('utf-8')
 
 def main():
     eval_process = None  # To track the running eval.py process
+    initialize = True
+
+    # Initialize ZMQ context and socket
+    context = zmq.Context()
+    server_socket = context.socket(zmq.REQ)
+    server_socket.connect("tcp://172.24.71.224:6000")
 
     print("Task Manager Initialized")
-    print("Enter task name to start evaluation or 'reset' to reset the robot or 'stop' to terminate the ongoing evaluation.")
+    prompt = "Take all bottles out of the fridge"
+
+    if not prompt:
+        print("Invalid input. Please enter a valid prompt.")
+        return
+
+    camera_capture = CameraCapture()
+
+    # serialize images
+    serialize_images = []
+    task_complete = True
+
+    # # Save and send images to the server
+    # image_paths = []
+    # for idx, image in enumerate(images):
+    #     image_path = f"camera_{idx}.jpg"
+    #     cv2.imwrite(image_path, image)
+    #     image_paths.append(image_path)
 
     while True:
-        # Get user input
-        user_input = input("Enter a task name or 'stop': ").strip()
-
-        # Handle "stop" input to terminate the current eval process
-        if user_input.lower() == "stop":
-            if eval_process and eval_process.poll() is None:
-                print("Stopping the ongoing evaluation process...")
-                eval_process.terminate()
-                eval_process.wait()
-                print("Evaluation process terminated.")
-            else:
-                print("No evaluation process is currently running.")
+        if initialize:
+            initialize = False
+            request = {
+                "image": serialize_images,
+                "image_path": "",
+                "query": f"Initialize: {prompt}"
+            }
+            server_socket.send_json(request)
+            response = server_socket.recv_json()
+            print("Initialized with response: ", response)
+            # import ipdb; ipdb.set_trace()
             continue
+        if task_complete:
+            # Request the next subtask from the server
+            task_complete = False
+            print("Capturing images...")
+            images = camera_capture.capture_images()
+            for idx, image in enumerate(images):
+                image = image[:,:,::-1]
+                # # convert np array to image
+                image = Image.fromarray(image)
+                serialized_image = serialize_image(image)
+                serialize_images.append(serialized_image)
+            print("Requesting next subtask...")
+            request = {
+                    "image": serialize_images,
+                    "image_path": "",
+                    "query": f"Next task"
+                }
+            server_socket.send_json(request)
+            task = server_socket.recv_json()
+            print("Received task: ", task)
+            task = task['result'].lower()
 
-        # Handle "reset" input to reset the robot
-        # if it is reset, run python reset.py suite=xarm_env_reset
-        if user_input.lower() == "reset":
-            try:
-                print("Resetting the robot...")
-                subprocess.run(["python", "reset.py", "suite=xarm_env_reset"])
-                print("Robot reset successfully.")
-            except Exception as e:
-                print(f"Failed to reset the robot: {e}")
-            continue
+            if not task or task == "stop":
+                print("All tasks completed.")
+                exit()
 
-        # Handle task name input
-        if user_input:
-            # TODO: use llm to classify task type
-            # task_name = llm.classify_task(user_input)
-
-            # For now, hack
-            # task_name = '0902_pickmug_anything'
-            task_name = user_input
-            if task_name ==  '1220_pick_bottle_from_fridge_12p':
-                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_fridge_7p2/snapshot/90000.pt'
-                expert_background = 'cam4_robot_7p'
-                expert_object = 'bottle'
-            elif task_name == '1223_place_bottle_on_ground':
+            # task_name = task.get("name")
+            # model_path = task.get("model_path")
+            # get what is inside "[]"
+            task, des_object = task[1:-1].split(',')[0].strip(), task[1:-1].split(',')[1].strip()
+            if task == 'pick_bottle_from_side_door_of_fridge':
+                task_name = '1220_pick_bottle_from_side_door'
+                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_side_door/snapshot/100000.pt'
+            elif task == 'place_bottle_on_ground':
+                task_name = '1223_place_bottle_on_ground'
                 model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_place_bottle/snapshot/100000.pt'
-                expert_background = 'cam4_robot_place_bottle'
-                expert_object = 'bottle'
+            elif task == 'pick_bottle_from_fridge':
+                task_name =  '1220_pick_bottle_from_fridge_12p'
+                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_fridge_7p2/snapshot/90000.pt'
 
-            # Validate model path
+            print(f"Task: {task_name}, Model: {model_path}, Object: {des_object}")
+
             if not os.path.exists(model_path):
                 print(f"Model file not found: {model_path}")
                 continue
@@ -65,18 +114,18 @@ def main():
                 eval_process.wait()
                 print("Previous evaluation process terminated.")
 
-            # Update the global configuration using the singleton
-            ConfigSingleton({
+            import yaml
+
+            # Define the dictionary
+            info_dict = {
                 "task_name": task_name,
                 "model_path": model_path,
-                "agent": "baku",
-                "suite": "xarm_env",
-                "dataloader": "p3po_xarm",
-                "use_proprio": False,
-                "hidden_dim": 256,
-                "expert_background": expert_background,
-                "expert_object": expert_object,
-            })
+                "desired_object": des_object
+            }
+
+            # Write the dictionary to a YAML file
+            with open('/mnt/robotlab/siddhant/P3PO/p3po/current_info.yaml', 'w') as f:
+                yaml.dump(info_dict, f)
 
             # Start the new eval process
             try:
@@ -94,10 +143,44 @@ def main():
                         f"bc_weight={model_path}",
                     ]
                 )
+
             except Exception as e:
                 print(f"Failed to start eval.py: {e}")
-        else:
-            print("Invalid input. Please enter a task name or 'stop'.")
+                continue
+
+        frame_count = 0
+        while not task_complete:
+            frame_count += 1
+
+            if frame_count % 200 == 0:
+                # Capture a frame to send to the server for judging
+                judge_serialized_images = []
+                images = camera_capture.capture_images()
+                for idx, image in enumerate(images):
+                    image = image[:,:,::-1]
+                    # # convert np array to image
+                    image = Image.fromarray(image)
+                    serialized_image = serialize_image(image)
+                    judge_serialized_images.append(serialized_image)
+
+                print("Sending images to the server for judging...")
+                request = {
+                    "image": judge_serialized_images,
+                    "image_path": "",
+                    "query": f"Judge: {task_name}"
+                }
+
+                server_socket.send_json(request)
+                response = server_socket.recv_json()
+                print("Received response from server: ", response)
+                is_complete = True if response['result'] == '1' else False
+
+                if is_complete:
+                    task_complete = True
+                    print(f"Task '{task_name}' completed successfully.")
+                    eval_process.terminate()
+                    eval_process.wait()
+                    break
 
 if __name__ == "__main__":
     main()

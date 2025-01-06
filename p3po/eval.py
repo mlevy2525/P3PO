@@ -241,7 +241,7 @@ def run_eval(cfg):
     workspace.eval()
 
 if __name__ == "__main__":
-    from config_singleton import ConfigSingleton
+    from P3PO.p3po.config_singleton import ConfigSingleton
     import hydra
 
     @hydra.main(config_path="cfgs", config_name="config_eval")
