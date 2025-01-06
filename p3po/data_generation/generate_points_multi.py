@@ -25,8 +25,8 @@ def serialize_image(image):
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
 read_from_pickle = True
-pickle_path = "/home/aadhithya/bobby_wks/P3PO/expert_demos/xarm_env/1218_pick_bottle_from_fridge.pkl"
-pickle_image_key = "pixels4"
+pickle_path = "/home/aadhithya/bobby_wks/P3PO/expert_demos/xarm_env/1220_pick_bottle_from_side_door_new.pkl"
+pickle_image_key = "pixels1"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
 # To use gt depth, the depth must be in the same pickle as the images
@@ -43,7 +43,7 @@ write_videos = True
 
 # TODO:  If you want to subsample the frames, set the subsample rate here. Note you will have to update your dataset to 
 # reflect the subsampling rate, we do not do this for you.
-subsample = 5
+subsample = 1
 
 with open("../cfgs/suite/p3po.yaml") as stream:
     try:
@@ -87,8 +87,8 @@ for i in range(num_demos):
         video.release()
 
     # get points in a separate way
-    cfg['task_name'] = 'bottle' #'plate_12p'  #"plate_14p"
-    cfg['num_points'] = 5 #12 #14
+    cfg['task_name'] = 'cylindial_bottle' #'bottle'  #'plate_12p'  #"plate_14p"
+    cfg['num_points'] = 6 #5 #12 #14
     _points_class = PointsClass(**cfg)
 
     context = zmq.Context()
@@ -106,7 +106,7 @@ for i in range(num_demos):
     socket.send_json(request)
     response = socket.recv_json()
     bbox_bottle = response["result"]
-    bbox_bottle = bbox_bottle[:-1]
+    bbox_bottle = bbox_bottle[:-1] if len(bbox_bottle) == 5 else bbox_bottle
     print("bbox_plate", bbox_bottle)
     print(type(bbox_bottle))
     # # exit()
@@ -119,11 +119,36 @@ for i in range(num_demos):
     first_points = _points_class.semantic_similar_points
     first_points_num = cfg['num_points']
 
-    cfg["task_name"] = 'cam4_robot' #'robot_and_rack_8p'  #"rack_and_robot"
-    cfg["num_points"] = 5 #8 #10
+    # cfg["task_name"] = 'cam4_robot_place_bottle' #'cam1_robot_7p' #'robot_and_rack_8p'  #"rack_and_robot"
+    # cfg["num_points"] = 6 #7 #8 #10
+    # _points_class = PointsClass(**cfg)
+    # _points_class.add_to_image_list(frame)
+    # _points_class.find_semantic_similar_points()
+    # second_points = _points_class.semantic_similar_points
+    # second_points_num = cfg['num_points']
+    # total_points_num = first_points_num + second_points_num
+    # print("found semantic similar points", second_points)
+    # # append first points to the semantic similar points
+
+    cfg["task_name"] = 'cam1_robot' #'cam4_robot_place_side_door_bottle' #'cam4_robot_7p' #'cam4_robot_8p' #"cam4_robot_place_bottle"
+    cfg["num_points"] = 7
     _points_class = PointsClass(**cfg)
+    serialized_image = serialize_image(image)
+    request = {
+        "image": serialized_image,
+        "image_path": "",
+        "query": "Get the bounding box of the robot (only get one)"
+    }
+    socket.send_json(request)
+    response = socket.recv_json()
+    bbox_bottle = response["result"]
+    if len(bbox_bottle) <= 3: bbox_bottle = bbox_bottle[0]
+    bbox_bottle = bbox_bottle[:-1] if len(bbox_bottle) == 5 else bbox_bottle
+    print("bbox_plate", bbox_bottle)
+    print(type(bbox_bottle))
+
     _points_class.add_to_image_list(frame)
-    _points_class.find_semantic_similar_points()
+    _points_class.find_semantic_similar_points(object_bbox = bbox_bottle)
     second_points = _points_class.semantic_similar_points
     second_points_num = cfg['num_points']
     total_points_num = first_points_num + second_points_num

@@ -14,7 +14,7 @@ from pathlib import Path
 # TODO: Set if you want to read from a pickle or from mp4 files
 # If you are reading from a pickle please make sure that the images are RGB not BGR
 read_from_pickle = True
-pickle_path = "/home/aadhithya/bobby_wks/P3PO/expert_demos/xarm_env/1211_naive.pkl"
+pickle_path = "/home/aadhithya/bobby_wks/P3PO/expert_demos/xarm_env/1218_pick_bottle_from_fridge_testing.pkl"
 pickle_image_key = "pixels4"
 
 # TODO: If you want to use gt depth, set to True and set the key for the depth in the pickle
@@ -54,7 +54,7 @@ points_class = PointsClass(**cfg)
 episode_list = []
 
 mark_every = 8
-for i in range(num_demos):
+for i in range(3):
     # Read the frames from the pickle or video, these frames must be in RGB so if reading from a pickle make sure to convert if necessary
     if read_from_pickle:
         frames = examples['observations'][i][pickle_image_key][0::subsample]

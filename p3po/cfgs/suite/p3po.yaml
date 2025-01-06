@@ -4,15 +4,15 @@ defaults:
 
 root_dir: /home/aadhithya/bobby_wks/P3PO
 
-task_name: '1218_pick_bottle_from_fridge' #'pick_plate_from_rack' #'0902_pickmug_anything' #"11_05_pick_white_plate_anything"
+task_name: 1220_pick_bottle_from_side_door_new #'0105_place_side_door_bottle_on_ground' #'1220_pick_bottle_from_fridge_new' #'0104_place_side_door_bottle_on_ground' #'pick_plate_from_rack' #'0902_pickmug_anything' #"11_05_pick_white_plate_anything"
 device: "cuda"
 
 width: -1
 height: -1
-image_size_multiplier: 1
+image_size_multiplier: 2
 
 ensemble_size: 8
 dift_layer: 1
 dift_steps: 50
 
-num_points: 10 #24 #24 # 9
+num_points: 13 #12 #24 #24 # 9

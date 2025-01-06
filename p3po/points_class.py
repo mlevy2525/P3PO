@@ -215,6 +215,7 @@ class PointsClass():
                 except:
                     depth = 0
 
+                # import ipdb; ipdb.set_trace()
                 x = (self.tracks[0, frame_idx, point][0] - width/2) * depth
                 y = (self.tracks[0, frame_idx, point][1] - height/2) * depth
                 x /= (width/2)

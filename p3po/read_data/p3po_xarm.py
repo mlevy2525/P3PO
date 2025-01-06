@@ -176,6 +176,7 @@ class BCDataset(IterableDataset):
                         observations[i][key] = observations[i][key][::subsample]
                     actions = actions[::subsample]
                 # action after steps
+                # import ipdb; ipdb.set_trace()
                 if relative_actions:
                     actions = get_relative_action(actions, self._action_after_steps)
                     # import ipdb; ipdb.set_trace()
