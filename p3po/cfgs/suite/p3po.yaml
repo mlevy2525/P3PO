@@ -2,14 +2,14 @@ defaults:
   - _self_
   - task: p3po
 
-root_dir: /mnt/robotlab/siddhant/P3PO
+root_dir: /home/aadhithya/bobby_wks/P3PO
 
-task_name: '1220_pick_bottle_from_fridge_12p' #'1220_pick_bottle_side_door' #'1220_pick_up_bottle' #'pick_white_plate_cam2'  #'11_05_pick_white_plate_anything' #'pick_white_plate_cam1' #"pick_plate_from_rack"
+task_name: '0106_pick_bottle_from_fridge' #'1220_pick_bottle_from_fridge_12p' #'1220_pick_bottle_side_door' #'1220_pick_up_bottle' #'pick_white_plate_cam2'  #'11_05_pick_white_plate_anything' #'pick_white_plate_cam1' #"pick_plate_from_rack"
 device: "cuda"
 
 width: -1
 height: -1
-image_size_multiplier: 1
+image_size_multiplier: 2
 
 ensemble_size: 8
 dift_layer: 1

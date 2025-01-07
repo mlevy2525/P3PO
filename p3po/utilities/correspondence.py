@@ -38,6 +38,7 @@ class Correspondence():
             The number of steps/iterations for the DIFT model to use in feature extraction.
 
         """
+        dift_path = '/home/aadhithya/bobby_wks/P3PO/dift'
         sys.path.append(dift_path)
         from src.models.dift_sd import SDFeaturizer
         self.dift = SDFeaturizer(device=device)

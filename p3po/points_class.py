@@ -69,6 +69,7 @@ class PointsClass():
 
         # Set up the depth model
         self.depth_model = Depth(root_dir + "/Depth-Anything-V2/", device)
+        print(root_dir)
 
         # Set up cotracker
         sys.path.append(root_dir + "/co-tracker/")
@@ -269,7 +270,7 @@ class PointsClass():
             img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             img_list.append(img.copy())
             # save the image
-            image_folder = "/mnt/robotlab/siddhant/P3PO/saved_images_temp"
+            image_folder = "/home/aadhithya/bobby_wks/P3PO/saved_images_temp"
             import time
             plt.imsave(f"{image_folder}/image_{time.time()}_{frame_num}.png", img)
             plt.close()

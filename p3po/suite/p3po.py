@@ -63,14 +63,14 @@ class P3POWrapper(dm_env.Environment):
         if self.isFirstReset:
             self.isFirstReset = False
             import yaml
-            with open("/mnt/robotlab/siddhant/P3PO/p3po/cfgs/suite/p3po.yaml") as stream:
+            with open("/home/aadhithya/bobby_wks/P3PO/p3po/cfgs/suite/p3po.yaml") as stream:
                 try:
                     cfg = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
                     print(exc)
 
             # Now read the current_info file
-            with open('/mnt/robotlab/siddhant/P3PO/p3po/current_info.yaml', 'r') as stream:
+            with open('/home/aadhithya/bobby_wks/P3PO/p3po/current_info.yaml', 'r') as stream:
                 try:
                     info = yaml.safe_load(stream)
                     print(info)
@@ -135,7 +135,7 @@ class P3POWrapper(dm_env.Environment):
             elif current_task in ['0105_place_side_door_bottle_on_ground']:
                 cfg['task_name'] = 'cam4_robot_place_side_door_bottle'
                 cfg['num_points'] = 7
-            elif current_task in ['1223_place_bottle_on_ground']:
+            elif current_task in ['1223_place_bottle_on_ground', '0103_place_bottle_on_ground']:
                 cfg['task_name'] = 'cam4_robot_place_bottle_8p'
                 cfg['num_points'] = 8
             elif current_task in ['1220_pick_bottle_from_side_door_new']:

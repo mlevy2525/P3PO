@@ -15,6 +15,7 @@ class Depth:
         device : str
             The device to use for computation, either 'cpu' or 'cuda' (for GPU acceleration).
         """
+        depth_path = '/home/aadhithya/bobby_wks/P3PO/Depth-Anything-V2/'
         sys.path.append(depth_path)
         from metric_depth.depth_anything_v2.dpt import DepthAnythingV2
 

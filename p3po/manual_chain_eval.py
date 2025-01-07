@@ -49,7 +49,8 @@ def main():
                 expert_background = 'cam4_robot_7p'
                 expert_object = 'bottle'
             elif task_name == '1223_place_bottle_on_ground':
-                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_place_bottle/snapshot/100000.pt'
+                # model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_place_bottle/snapshot/100000.pt'
+                model_path = '/data/bobby/1223_place_bottle_on_ground/100000.pt'
                 expert_background = 'cam4_robot_place_bottle'
                 expert_object = 'bottle'
             elif task_name == '1220_pick_bottle_from_side_door':
@@ -57,19 +58,23 @@ def main():
                 expert_background = 'cam4_robot_7p'
                 expert_object = 'bottle'
             elif task_name == '0103_place_bottle_on_ground':
-                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_place_bottle_reset/snapshot/100000.pt'
+                # model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_place_bottle_reset/snapshot/100000.pt'
+                model_path = '/data/bobby/0103_place_bottle_on_ground/100000.pt'
                 expert_background = 'cam4_robot_place_bottle'
                 expert_object = 'bottle'
             elif task_name == '1220_pick_bottle_from_fridge_new':
-                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_side_door_new/snapshot/150000.pt'
+                # model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_side_door_new/snapshot/150000.pt'
+                model_path = '/data/bobby/1220_pick_bottle_from_fridge_new/150000.pt'
                 expert_background = ''
-                expert_object = ''
+                expert_object = '' 
             elif task_name == '1220_pick_bottle_from_side_door_new':
-                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_fridge_new/snapshot/150000.pt'
+                # model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_pick_bottle_fridge_new/snapshot/140000.pt'
+                model_path = '/data/bobby/1220_pick_bottle_from_side_door_new/140000.pt'
                 expert_background = ''
                 expert_object = ''
             elif task_name == '0105_place_side_door_bottle_on_ground':
-                model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_0105_place_side_door/snapshot/112000.pt'
+                # model_path = '/mnt/robotlab/siddhant/P3PO/snapshot_0105_place_side_door/snapshot/112000.pt
+                model_path = '/data/bobby/0105_place_side_door_bottle_on_ground/112000.pt'
                 expert_background = ''
                 expert_object = ''
 
@@ -88,7 +93,7 @@ def main():
             }
 
             # Write the dictionary to a YAML file
-            with open('/mnt/robotlab/siddhant/P3PO/p3po/current_info.yaml', 'w') as f:
+            with open('/home/aadhithya/bobby_wks/P3PO/p3po/current_info.yaml', 'w') as f:
                 yaml.dump(info_dict, f)
 
             # Terminate any existing eval process before starting a new one
