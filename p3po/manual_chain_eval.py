@@ -77,6 +77,14 @@ def main():
                 model_path = '/data/bobby/0105_place_side_door_bottle_on_ground/112000.pt'
                 expert_background = ''
                 expert_object = ''
+            elif task_name == '0106_pick_bottle_from_fridge':
+                model_path = '/home/aadhithya/bobby_wks/P3PO/p3po/exp_local/2025.01.07_train/deterministic/pick_from_fridge_no_reset/snapshot/102000.pt'
+                expert_background = 'cam4_robot_7p'
+                expert_object = 'bottle'
+            elif task_name == '0106_pick_bottle_from_fridge_good':
+                model_path = '/home/aadhithya/bobby_wks/P3PO/p3po/exp_local/2025.01.07_train/deterministic/030021_hidden_dim_256/snapshot/20000.pt'
+                expert_background = 'cam4_robot_7p'
+                expert_object = 'bottle'
 
             # Validate model path
             if not os.path.exists(model_path):

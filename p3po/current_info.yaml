@@ -1,3 +1,3 @@
-desired_object: green bottle
-model_path: /data/bobby/1220_pick_bottle_from_fridge_new/150000.pt
-task_name: 1220_pick_bottle_from_fridge_new
+desired_object: bottle
+model_path: /home/aadhithya/bobby_wks/P3PO/p3po/exp_local/2025.01.07_train/deterministic/030021_hidden_dim_256/snapshot/20000.pt
+task_name: 0106_pick_bottle_from_fridge_good

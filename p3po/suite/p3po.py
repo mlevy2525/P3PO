@@ -84,7 +84,7 @@ class P3POWrapper(dm_env.Environment):
             socket.connect("tcp://172.24.71.224:6000")
 
             # Initialize the PointsClass object
-            if current_task in ['1223_place_bottle_on_ground', '0103_place_bottle_on_ground', '1220_pick_bottle_from_fridge_new']: #'cylindial_bottle' #'plate_12p'  #"plate_14p"
+            if current_task in ['1223_place_bottle_on_ground', '0103_place_bottle_on_ground', '1220_pick_bottle_from_fridge_new', '0106_pick_bottle_from_fridge', '0106_pick_bottle_from_fridge_good']: #'cylindial_bottle' #'plate_12p'  #"plate_14p"
                 cfg['task_name'] = 'bottle' 
                 cfg['num_points'] = 5
             elif current_task in ['1220_pick_bottle_from_side_door', '0105_place_side_door_bottle_on_ground', '1220_pick_bottle_from_side_door_new']:
@@ -129,7 +129,7 @@ class P3POWrapper(dm_env.Environment):
             # cfg["num_points"] = 6 if current_task == '1223_place_bottle_on_ground' else 7 #7 #8 #10
             # cfg["task_name"] = 'cam4_robot_place_bottle_8p' if current_task in ['1223_place_bottle_on_ground', '0103_place_bottle_on_ground'] else 'cam4_robot_8p'
             # cfg["num_points"] = 8
-            if current_task in ['1220_pick_bottle_from_fridge_new']:
+            if current_task in ['1220_pick_bottle_from_fridge_new', '0106_pick_bottle_from_fridge', '0106_pick_bottle_from_fridge_good']:
                 cfg['task_name'] = 'cam4_robot_7p'
                 cfg['num_points'] = 7
             elif current_task in ['0105_place_side_door_bottle_on_ground']:
