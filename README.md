@@ -7,7 +7,7 @@
 ```
 conda env create -f conda_env.yml
 ```
-- Activate the environment using `conda activate p3po`. Please note that different computers and environments will require different installations for pytorch and the cudatoolkit. We install them with pip install, but make sure that this is compatible with your computer's version of cuda. If it is not you should be fine to just uninstall pytorch and download it as makes sense for your set up.
+- Activate the environment using `conda activate p3po`. Please note that different computers and environments will require different installations for pytorch and the cudatoolkit. We install them with pip install, but make sure that this is compatible with your computer's version of cuda. If it is not you should be fine to just uninstall pytorch and download it as makes sense for your set up. Please use pytorch 2.5.0 and torchvision 0.20.0, later versions will break the eval code.
 
 - You can download and install the submodules and relevant packages by running the setup.sh file. Make sure to run this from the root repository or the models may get installed in the wrong location.
 ```
